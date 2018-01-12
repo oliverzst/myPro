@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.actec.bsms.repository.dao.FacilityDao">
+
+	<resultMap id="facilityResult" type="com.actec.bsms.entity.Facility">
+		<id property="id" column="id" />
+		<result property="ip" column="ip" />
+		<result property="name" column="name" />
+		<result property="domain" column="domain" />
+		<result property="sysNumber" column="sysNumber" />
+		<result property="longitude" column="longitude" />
+		<result property="latitude" column="latitude" />
+		<result property="manufacturer" column="manufacturer" />
+		<result property="address" column="address" />
+		<result property="lastTaskId" column="lastTaskId" />
+		<result property="status" column="status" />
+		<result property="type" column="type" />
+		<result property="cchFreq" column="cchFreq" />
+		<result property="tchCount" column="tchCount" />
+		<result property="rcuStatus" column="rcuStatus" />
+		<collection property="lastInspect" ofType="com.actec.bsms.entity.Inspect">
+			<id property="endTime" column="lastInspect.endTime" />
+		</collection>
+	</resultMap>
+
+    <sql id="facilityColumns">
+    	a.id,
+    	a.ip,
+    	a.name,
+		a.domain,
+		a.sys_number AS "sysNumber",
+		a.longitude,
+		a.latitude,
+		a.manufacturer,
+		a.address,
+		a.last_task_id AS "lastTaskId",
+		a.status,
+		a.type,
+		a.cch_freq AS "cchFreq",
+		a.tch_count AS "tchCount",
+		a.rcu_status AS "rcuStatus",
+        t.end_time AS "lastInspect.endTime"
+    </sql>
+    
+    <sql id="facilityJoins">
+		LEFT JOIN inspect t ON t.id = a.last_task_id
+    </sql>
+	
+	<!-- 根据编号获得用户 -->
+	<select id="get" resultMap="facilityResult">
+		SELECT
+			<include refid="facilityColumns"/>
+		FROM facility a
+			<include refid="facilityJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<!-- 查询全部 -->
+	<select id="findAll" resultMap="facilityResult">
+		SELECT
+			<include refid="facilityColumns"/>
+		FROM facility a
+		<include refid="facilityJoins"/>
+	</select>
+
+	<!-- 查询全部 -->
+	<select id="findByDomain" resultMap="facilityResult">
+		SELECT
+		<include refid="facilityColumns"/>
+		FROM facility a
+		<include refid="facilityJoins"/>
+		WHERE a.domain = #{domain}
+	</select>
+	
+	<!-- 插入 -->
+	<insert id="insert">
+		INSERT INTO facility(
+			id,
+			ip,
+			name,
+			domain,
+			sys_number,
+			longitude,
+			latitude,
+			manufacturer,
+			address,
+			last_task_id,
+			status,
+			type,
+			cch_freq,
+			tch_count,
+			rcu_status
+		) VALUES (
+			#{id},
+			#{ip},
+			#{name},
+			#{domain},
+			#{sysNumber},
+			#{longitude},
+			#{latitude},
+			#{manufacturer},
+			#{address},
+			#{lastTaskId},
+			#{status},
+			#{type},
+			#{cchFreq},
+			#{tchCount},
+			#{rcuStatus}
+		)
+	</insert>
+
+	<!-- 更新 -->
+	<update id="update">
+		UPDATE facility SET
+			ip = #{ip},
+			name = #{name},
+			sys_number = #{sysNumber},
+			longitude = #{longitude},
+			latitude = #{latitude},
+			manufacturer = #{manufacturer},
+			address = #{address},
+			last_task_id = #{lastTaskId},
+			status = #{status},
+			type = #{type},
+			cch_freq = #{cchFreq},
+			tch_count = #{tchCount},
+			rcu_status = #{rcuStatus}
+		WHERE id = #{id}
+	</update>
+
+	<delete id="delete">
+		delete from facility WHERE id=#{id};
+	</delete>
+
+	<!-- 创建设备表 -->
+	<update id="createTable">
+		<![CDATA[
+		CREATE TABLE IF NOT EXISTS facility (
+		  id int AUTO_INCREMENT COMMENT '编号',
+		  ip varchar(64) DEFAULT NULL COMMENT '设备IP地址',
+		  name varchar(64) DEFAULT NULL COMMENT '设备名称',
+		  domain varchar(64) DEFAULT NULL COMMENT '设备域名',
+		  sys_number varchar(64) DEFAULT NULL COMMENT '系统号',
+		  longitude decimal(10,5) COMMENT '经度' DEFAULT NULL,
+  		  latitude decimal(10,5) COMMENT '纬度' DEFAULT NULL,
+  		  manufacturer varchar(64) DEFAULT NULL COMMENT '设备厂家',
+  		  address varchar(64) DEFAULT NULL COMMENT '设备地址',
+		  last_task_id int COMMENT '最近一次任务ID',
+		  status varchar(64) DEFAULT NULL COMMENT '设备维护状态',
+		  type int COMMENT '设备类型',
+		  cch_freq varchar(64) DEFAULT NULL '控制信道频点号',
+		  tch_count int COMMENT '逻辑信道个数',
+		  rcu_status int COMMENT '连接状态',
+		  PRIMARY KEY (`id`)
+		) COMMENT='设备表';
+		]]>
+	</update>
+	
+</mapper>

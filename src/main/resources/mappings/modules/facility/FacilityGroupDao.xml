@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.actec.bsms.repository.dao.FacilityGroupDao">
+
+	<resultMap id="facilityGroupResult" type="com.actec.bsms.entity.FacilityGroup">
+		<id property="id" column="id" />
+		<result property="name" column="name" />
+		<result property="createDate" column="create_date" />
+		<result property="updateDate" column="update_date" />
+		<result property="remarks" column="remarks" />
+		<collection property="facilityList" ofType="com.actec.bsms.entity.Facility">
+			<id property="id" column="facilityList.id" />
+			<id property="ip" column="facilityList.ip" />
+			<id property="name" column="facilityList.name" />
+			<id property="domain" column="facilityList.domain" />
+			<id property="sysNumber" column="facilityList.sysNumber" />
+			<id property="longitude" column="facilityList.longitude" />
+			<id property="latitude" column="facilityList.latitude" />
+			<id property="manufacturer" column="facilityList.manufacturer" />
+			<id property="address" column="facilityList.address" />
+			<id property="lastTaskId" column="facilityList.lastTaskId" />
+			<id property="status" column="facilityList.status" />
+			<id property="type" column="facilityList.type" />
+			<id property="cchFreq" column="facilityList.cchFreq" />
+			<id property="tchCount" column="facilityList.tchCount" />
+			<id property="rcuStatus" column="facilityList.rcuStatus" />
+			<collection property="lastInspect" ofType="com.actec.bsms.entity.Inspect">
+				<id property="endTime" column="lastInspect.endTime" />
+			</collection>
+		</collection>
+	</resultMap>
+
+	<sql id="facilityColumns">
+    	a.id,
+    	a.name,
+		a.create_date,
+		a.update_date,
+		a.remarks,
+		a.del_flag,
+		f.id AS "facilityList.id",
+		f.ip AS "facilityList.ip",
+		f.name AS "facilityList.name",
+		f.domain AS "facilityList.domain",
+		f.sys_number AS "facilityList.sysNumber",
+		f.longitude AS "facilityList.longitude",
+		f.latitude AS "facilityList.latitude",
+		f.manufacturer AS "facilityList.manufacturer",
+		f.address AS "facilityList.address",
+		f.last_task_id AS "facilityList.lastTaskId",
+		f.status AS "facilityList.status",
+		f.type AS "facilityList.type",
+		f.cch_freq AS "facilityList.cchFreq",
+		f.tch_count AS "facilityList.tchCount",
+		f.rcu_status AS "facilityList.rcuStatus",
+		t.end_time AS "lastInspect.endTime"
+    </sql>
+    
+    <sql id="facilityJoins">
+		LEFT JOIN facility_facility_group ffg ON ffg.facility_group_id = a.id
+		LEFT JOIN facility f ON f.domain = ffg.facility_domain
+		LEFT JOIN inspect t ON t.id = f.last_task_id
+    </sql>
+	
+	<!-- 根据编号获得设备组 -->
+	<select id="get" resultMap="facilityGroupResult">
+		SELECT
+			<include refid="facilityColumns"/>
+		FROM facility_group a
+			<include refid="facilityJoins"/>
+		WHERE a.id = #{id} AND a.del_flag = 0
+	</select>
+
+	
+	<!-- 查询全部 -->
+	<select id="findAll" resultMap="facilityGroupResult">
+		SELECT
+			<include refid="facilityColumns"/>
+		FROM facility_group a
+		<include refid="facilityJoins"/>
+		WHERE a.del_flag = 0
+	</select>
+
+	<!-- 根据名称查询 -->
+	<select id="findByName" resultMap="facilityGroupResult">
+		SELECT
+		<include refid="facilityColumns"/>
+		FROM facility_group a
+		<include refid="facilityJoins"/>
+		WHERE a.del_flag = 0 AND a.name = #{name}
+	</select>
+
+	<select id="findNewFacilityGroup" resultMap="facilityGroupResult">
+		SELECT
+		<include refid="facilityColumns"/>
+		FROM facility_group a
+		<include refid="facilityJoins"/>
+		WHERE a.del_flag = 0
+		ORDER BY a.id desc LIMIT 1
+	</select>
+	
+	<!-- 插入 -->
+	<insert id="insert">
+		INSERT INTO facility_group(
+			id,
+			name,
+			create_date,
+			update_date,
+			remarks,
+			del_flag
+		) VALUES (
+			#{id},
+			#{name},
+			#{createDate},
+			#{updateDate},
+			#{remarks},
+			0
+		)
+	</insert>
+
+	<!-- 删除设备和设备组关联表数据 -->
+	<delete id="deleteFacilityGroup">
+		DELETE FROM facility_facility_group WHERE facility_group_id = #{id}
+	</delete>
+
+	<!-- 插入设备和设备组关联表数据 -->
+	<insert id="insertFacilityGroup">
+		INSERT INTO facility_facility_group(facility_group_id, facility_domain)
+		<foreach collection="facilityList" item="facility" separator=" union all ">
+			SELECT #{id}, #{facility.domain}
+			FROM dual
+		</foreach>
+	</insert>
+
+
+	<!-- 更新 -->
+	<update id="update">
+		UPDATE facility_group SET
+			name = #{name},
+			update_date = #{updateDate},
+			remarks = #{remarks}
+		WHERE id = #{id}
+	</update>
+
+	<!-- 删除 -->
+	<update id="delete">
+		UPDATE facility_group SET
+		del_flag = 1
+		WHERE id = #{id}
+	</update>
+
+	<!-- 创建设备表 -->
+	<update id="createTable">
+		<![CDATA[
+		CREATE TABLE IF NOT EXISTS facility_group (
+		  id int AUTO_INCREMENT COMMENT '编号',
+		  name varchar(64) NOT NULL COMMENT '设备组名称',
+		  create_date datetime NOT NULL COMMENT '创建时间',
+		  update_date datetime NOT NULL COMMENT '更新时间',
+		  remarks varchar(255) DEFAULT NULL COMMENT '备注信息',
+		  del_flag char(1) NOT NULL DEFAULT '0' COMMENT '删除标记',
+		  PRIMARY KEY (`id`)
+		) COMMENT='设备组表';
+		]]>
+	</update>
+
+	<!-- 初始化数据 -->
+	<update id="initTable">
+		INSERT INTO `facility_group` VALUES (1, '全基站', now(), now(), null, '0');
+	</update>
+
+	<!-- 创建设备设备组关联表 -->
+	<update id="createFacilityGroupTable">
+		<![CDATA[
+		CREATE TABLE IF NOT EXISTS facility_facility_group (
+		  facility_domain VARCHAR(64) COMMENT '设备编号',
+		  facility_group_id int COMMENT '设备组编号'
+		) COMMENT='设备设备组关联表';
+		]]>
+	</update>
+	
+</mapper>

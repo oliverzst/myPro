@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.actec.bsms.repository.dao.InspectDeviceModuleDao">
+
+	<!-- 创建目录设备关联表 -->
+	<update id="createTable">
+		<![CDATA[
+		CREATE TABLE IF NOT EXISTS inspect_device_module (
+		  inspect_device_type_id int COMMENT '巡检设备类型编号',
+		  module_id int COMMENT '目录编号'
+		) COMMENT='巡检设备类型目录关联表';
+		]]>
+	</update>
+
+	<!-- 初始化数据 -->
+	<update id="initTable">
+		INSERT INTO `inspect_device_module` VALUES (1, 1);
+	</update>
+
+	<update id="initTable1">
+		INSERT INTO `inspect_device_module` VALUES (1, 2);
+	</update>
+
+	<update id="initTable2">
+		INSERT INTO `inspect_device_module` VALUES (1, 3);
+	</update>
+
+	<update id="initTable3">
+		INSERT INTO `inspect_device_module` VALUES (1, 4);
+	</update>
+
+	<update id="initTable4">
+		INSERT INTO `inspect_device_module` VALUES (1, 5);
+	</update>
+
+	<update id="initTable5">
+		INSERT INTO `inspect_device_module` VALUES (1, 6);
+	</update>
+
+	<update id="initTable6">
+		INSERT INTO `inspect_device_module` VALUES (1, 7);
+	</update>
+
+	<update id="initTable7">
+		INSERT INTO `inspect_device_module` VALUES (1, 8);
+	</update>
+
+    <sql id="menuColumns">
+    	a.inspect_device_type_id,
+    	a.module_id
+    </sql>
+	
+</mapper>

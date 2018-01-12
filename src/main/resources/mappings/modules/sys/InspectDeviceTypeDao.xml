@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.actec.bsms.repository.dao.InspectDeviceTypeDao">
+
+	<!-- 创建巡检设备类型表 -->
+	<update id="createTable">
+		<![CDATA[
+		CREATE TABLE IF NOT EXISTS inspect_device_type (
+		  id int AUTO_INCREMENT COMMENT '编号',
+		  name varchar(100) NOT NULL COMMENT '名称',
+		  create_date datetime NOT NULL COMMENT '创建时间',
+		  update_date datetime NOT NULL COMMENT '更新时间',
+		  remarks varchar(255) DEFAULT NULL COMMENT '备注信息',
+		  del_flag char(1) NOT NULL DEFAULT '0' COMMENT '删除标记',
+		  PRIMARY KEY (`id`)
+		) COMMENT='巡检设备类型表';
+		]]>
+	</update>
+
+	<!-- 初始化数据 -->
+	<update id="initTable">
+		INSERT INTO `inspect_device_type` VALUES (1, 'PDT设备', now(), now(), null, '0');
+	</update>
+
+	<update id="initTable1">
+		INSERT INTO `inspect_device_type` VALUES (2, '供电', now(), now(), null, '0');
+	</update>
+
+	<update id="initTable2">
+		INSERT INTO `inspect_device_type` VALUES (3, '基建', now(), now(), null, '0');
+	</update>
+
+	<update id="initTable3">
+		INSERT INTO `inspect_device_type` VALUES (4, '网络链路', now(), now(), null, '0');
+	</update>
+
+	<resultMap id="inspectDeviceTypeResult" type="com.actec.bsms.entity.InspectDeviceType">
+		<id property="id" column="id" />
+		<result property="name" column="name" />
+		<collection property="menuList" ofType="com.actec.bsms.entity.Menu">
+			<id property="id" column="menuList.id" />
+			<id property="name" column="menuList.name" />
+		</collection>
+		<collection property="moduleList" ofType="com.actec.bsms.entity.Module">
+			<id property="id" column="moduleList.id" />
+			<id property="name" column="moduleList.name" />
+		</collection>
+	</resultMap>
+
+    <sql id="inspectDeviceTypeColumns">
+    	a.id,
+    	a.name,
+		a.create_date,
+		a.update_date,
+		a.remarks,
+		m.id AS "menuList.id",
+		m.name AS "menuList.name",
+		mo.id AS "moduleList.id",
+		mo.name AS "moduleList.name",
+		a.del_flag
+    </sql>
+
+	<sql id="inspectDeviceTypeColumn">
+		a.id,
+		a.name,
+		a.create_date,
+		a.update_date,
+		a.remarks,
+		a.del_flag
+	</sql>
+
+	<sql id="inspectDeviceTypeJoins">
+		LEFT JOIN inspect_device_menu idm ON idm.inspect_device_type_id = a.id
+		LEFT JOIN sys_menu m ON m.id = idm.menu_id
+		LEFT JOIN inspect_device_module idmo ON idmo.inspect_device_type_id = a.id
+		LEFT JOIN sys_module mo ON mo.id = idmo.module_id
+	</sql>
+    
+	<select id="get" resultType="com.actec.bsms.entity.InspectDeviceType">
+		SELECT
+			<include refid="inspectDeviceTypeColumn"/>
+		FROM inspect_device_type a
+		WHERE a.id = #{id}
+	</select>
+
+	<select id="findById" resultMap="inspectDeviceTypeResult">
+		SELECT
+		<include refid="inspectDeviceTypeColumns"/>
+		FROM inspect_device_type a
+		<include refid="inspectDeviceTypeJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultMap="inspectDeviceTypeResult">
+		SELECT <!-- DISTINCT -->
+			<include refid="inspectDeviceTypeColumns"/>
+		FROM inspect_device_type a
+            <include refid="inspectDeviceTypeJoins"/>
+		WHERE a.del_flag = 0
+	</select>
+	
+	<select id="findAllList" resultMap="inspectDeviceTypeResult">
+		SELECT
+			<include refid="inspectDeviceTypeColumns"/>
+		FROM inspect_device_type a
+            <include refid="inspectDeviceTypeJoins"/>
+		WHERE a.del_flag = 0
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO inspect_device_type(
+			id,
+			name,
+			create_date,
+			update_date, 
+			remarks, 
+			del_flag
+		) VALUES (
+			#{id},
+			#{name},
+			#{createDate},
+			#{updateDate}, 
+			#{remarks}, 
+			#{delFlag}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE inspect_device_type SET
+			name = #{name},
+			update_date = #{updateDate}, 
+			remarks = #{remarks}
+		WHERE id = #{id}
+	</update>
+
+	<update id="delete">
+		UPDATE inspect_device_type SET
+			del_flag = 1
+		WHERE id = #{id}
+	</update>
+
+	<!-- 删除设备和设备组关联表数据 -->
+	<delete id="deleteInspectDeviceMenu">
+		DELETE FROM inspect_device_menu WHERE inspect_device_type_id = #{id}
+	</delete>
+
+	<!-- 删除设备和设备组关联表数据 -->
+	<delete id="deleteInspectDeviceModule">
+		DELETE FROM inspect_device_module WHERE inspect_device_type_id = #{id}
+	</delete>
+
+	<!-- 插入设备和设备组关联表数据 -->
+	<insert id="insertInspectDeviceMenu">
+		INSERT INTO inspect_device_menu(inspect_device_type_id, menu_id)
+		<foreach collection="menuList" item="menu" separator=" union all ">
+			SELECT #{id}, #{menu.id}
+			FROM dual
+		</foreach>
+	</insert>
+
+	<insert id="insertInspectDeviceModule">
+		INSERT INTO inspect_device_module(inspect_device_type_id, module_id)
+		<foreach collection="moduleList" item="module" separator=" union all ">
+			SELECT #{id}, #{module.id}
+			FROM dual
+		</foreach>
+	</insert>
+	
+</mapper>

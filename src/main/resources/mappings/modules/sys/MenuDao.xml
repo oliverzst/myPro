@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.actec.bsms.repository.dao.MenuDao">
+
+	<!-- 创建目录表 -->
+	<update id="createTable">
+		<![CDATA[
+		CREATE TABLE IF NOT EXISTS sys_menu (
+		  id int AUTO_INCREMENT COMMENT '编号',
+		  name varchar(100) NOT NULL COMMENT '名称',
+		  description varchar(255) DEFAULT NULL COMMENT '描述',
+		  input_type varchar(255) DEFAULT NULL COMMENT '输入类型',
+		  create_date datetime NOT NULL COMMENT '创建时间',
+		  update_date datetime NOT NULL COMMENT '更新时间',
+		  remarks varchar(255) DEFAULT NULL COMMENT '备注信息',
+		  del_flag char(1) NOT NULL DEFAULT '0' COMMENT '删除标记',
+		  PRIMARY KEY (`id`)
+		) COMMENT='目录表';
+		]]>
+	</update>
+
+	<!-- 初始化数据 -->
+	<update id="initTable">
+		INSERT INTO `sys_menu` VALUES (1, '天线状态', '', '', now(), now(), null, '0');
+	</update>
+
+	<update id="initTable1">
+		INSERT INTO `sys_menu` VALUES (2, '馈线连接', '', '', now(), now(), null, '0');
+	</update>
+
+	<update id="initTable2">
+		INSERT INTO `sys_menu` VALUES (3, '电源与接地', '', '', now(), now(), null, '0');
+	</update>
+
+	<update id="initTable3">
+		INSERT INTO `sys_menu` VALUES (4, '呼叫通话', '', '', now(), now(), null, '0');
+	</update>
+
+	<update id="initTable4">
+		INSERT INTO `sys_menu` VALUES (5, '功率测试', '', '', now(), now(), null, '0');
+	</update>
+
+	<update id="initTable5">
+		INSERT INTO `sys_menu` VALUES (6, '网络状态', '', '', now(), now(), null, '0');
+	</update>
+
+	<update id="initTable6">
+		INSERT INTO `sys_menu` VALUES (7, '机房环境', '', '', now(), now(), null, '0');
+	</update>
+
+    <sql id="menuColumns">
+    	a.id,
+    	a.name,
+		a.description,
+		a.input_type,
+		a.create_date,
+		a.update_date,
+		a.remarks,
+		a.del_flag
+    </sql>
+    
+	<select id="get" resultType="com.actec.bsms.entity.Menu">
+		SELECT
+			<include refid="menuColumns"/>
+		FROM sys_menu a
+		WHERE a.id = #{id} AND a.del_flag = 0
+	</select>
+
+	<select id="findList" resultType="com.actec.bsms.entity.Menu">
+		SELECT <!-- DISTINCT -->
+			<include refid="menuColumns"/>
+		FROM sys_menu a
+		WHERE a.del_flag = 0
+	</select>
+
+	<select id="findLast" resultType="com.actec.bsms.entity.Menu">
+		SELECT <!-- DISTINCT -->
+			<include refid="menuColumns"/>
+		FROM sys_menu a
+		WHERE a.del_flag = 0
+		ORDER BY a.id DESC LIMIT 1
+	</select>
+	
+	<select id="findAllList" resultType="com.actec.bsms.entity.Menu">
+		SELECT
+			<include refid="menuColumns"/>
+		FROM sys_menu a
+		WHERE a.del_flag = 0
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO sys_menu(
+			id,
+			name,
+			description,
+			input_type,
+			create_date,
+			update_date, 
+			remarks, 
+			del_flag
+		) VALUES (
+			#{id},
+			#{name},
+			#{description},
+			#{inputType},
+			#{createDate},
+			#{updateDate}, 
+			#{remarks}, 
+			#{delFlag}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE sys_menu SET
+			name = #{name},
+			description = #{description},
+			input_type = #{inputType},
+			update_date = #{updateDate},
+			remarks = #{remarks}
+		WHERE id = #{id}
+	</update>
+
+	<update id="delete">
+		UPDATE sys_menu SET
+			del_flag = 1
+		WHERE id = #{id}
+	</update>
+
+	<!-- 删除设备和设备组关联表数据 -->
+	<delete id="deleteInspectDeviceMenu">
+		DELETE FROM inspect_device_menu WHERE menu_id = #{menuId} AND inspect_device_type_id = #{inspectDeviceTypeId};
+	</delete>
+
+	<!-- 插入设备和设备组关联表数据 -->
+	<insert id="insertInspectDeviceMenu">
+		INSERT INTO inspect_device_menu(
+			inspect_device_type_id,
+			menu_id
+		) VALUES (
+			#{inspectDeviceTypeId},
+			#{menuId}
+		)
+	</insert>
+	
+</mapper>

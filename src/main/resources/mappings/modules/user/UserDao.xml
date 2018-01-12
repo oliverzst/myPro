@@ -1,0 +1,233 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.actec.bsms.repository.dao.UserDao">
+	
+    <sql id="userColumns">
+    	a.id,
+    	a.login_name,
+    	a.password,
+		a.name,
+		a.phone,
+		a.login_device,
+		a.login_date,
+		a.remarks,
+		a.create_date,
+		a.update_date,
+		a.del_flag,
+		a.inspect_device_type,
+		a.role_id,
+        r.id AS "role.id",
+        r.name AS "role.name",
+        a.facility_group_id,
+        fg.id AS "facilityGroup.id",
+        fg.name AS "facilityGroup.name"
+    </sql>
+    
+    <sql id="userJoins">
+		LEFT JOIN facility_group fg ON fg.id = a.facility_group_id
+        LEFT JOIN sys_role r ON r.id = a.role_id
+    </sql>
+	
+	<!-- 根据编号获得用户 -->
+	<select id="get" resultType="com.actec.bsms.entity.User">
+		SELECT
+			<include refid="userColumns"/>
+		FROM sys_user a
+			<include refid="userJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<!-- 分页查询用户信息 -->
+	<select id="findList" resultType="com.actec.bsms.entity.User">
+		SELECT
+			<include refid="userColumns"/>
+		FROM sys_user a
+		<include refid="userJoins"/>
+		WHERE a.del_flag = 0
+		<if test="loginName != null and loginName != ''">
+			AND a.login_name like 
+					<if test="dbName == 'oracle'">'%'||#{loginName}||'%'</if>
+					<if test="dbName == 'mysql'">CONCAT('%', #{loginName}, '%')</if>
+		</if>
+		<if test="name != null and name != ''">
+			AND a.name like 
+					<if test="dbName == 'oracle'">'%'||#{name}||'%'</if>
+					<if test="dbName == 'mysql'">CONCAT('%', #{name}, '%')</if>
+		</if>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+-- 				ORDER BY c.code, o.code, a.name
+				ORDER BY a.name
+			</otherwise>
+		</choose>
+	</select>
+	
+	<!-- 查询全部用户 -->
+	<select id="findAllList" resultType="com.actec.bsms.entity.User">
+		SELECT
+			<include refid="userColumns"/>
+		FROM sys_user a
+		<include refid="userJoins"/>
+		WHERE a.del_flag = 0
+		ORDER BY a.name
+	</select>
+
+	<!-- 根据登录名查询用户 -->
+	<select id="findByLoginName" resultType="com.actec.bsms.entity.User">
+		SELECT
+		<include refid="userColumns"/>
+		FROM sys_user a
+		<include refid="userJoins"/>
+		WHERE (a.phone=#{loginName} OR a.login_name = #{loginName}) AND a.del_flag = 0
+	</select>
+
+	<select id="findNewUser" resultType="com.actec.bsms.entity.User">
+		SELECT
+		<include refid="userColumns"/>
+		FROM sys_user a
+		<include refid="userJoins"/>
+		WHERE a.del_flag = 0
+		ORDER BY a.id desc LIMIT 1
+	</select>
+
+	<!-- 根据登录名查询用户 -->
+	<select id="checkRegister" resultType="com.actec.bsms.entity.User">
+		SELECT
+		<include refid="userColumns"/>
+		FROM sys_user a
+		<include refid="userJoins"/>
+		WHERE (a.phone=#{phone} OR a.login_name = #{loginName} OR a.name = #{name}) AND a.del_flag = 0
+	</select>
+
+	<!-- 根据设备id查询用户 -->
+	<select id="findByDevice" resultType="com.actec.bsms.entity.User">
+		SELECT
+		<include refid="userColumns"/>
+		FROM sys_user a
+		<include refid="userJoins"/>
+		WHERE a.login_device=#{deviceId} AND a.del_flag = 0
+	</select>
+
+	<!-- 根据设备roleId查询下级用户 -->
+	<select id="findByRoleId" resultType="com.actec.bsms.entity.User">
+		SELECT
+		<include refid="userColumns"/>
+		FROM sys_user a
+		<include refid="userJoins"/>
+		WHERE a.role_id>#{roleId} AND a.del_flag = 0
+	</select>
+
+	<!-- 更新登录信息，如登录设备、登录时间 -->
+	<update id="updateLoginInfo">
+		UPDATE sys_user SET
+		login_device = #{deviceId},
+		login_Date = #{loginDate}
+		WHERE id = #{id}
+	</update>
+
+	<!-- 更新登录信息，如登录设备、登录时间 -->
+	<update id="modifyPassword">
+		UPDATE sys_user SET
+		password = #{password}
+		WHERE id = #{id}
+	</update>
+	
+	<!-- 插入用户 -->
+	<insert id="insert">
+		INSERT INTO sys_user(
+			id,
+			login_name, 
+			password,
+			name,
+			phone,
+			login_date,
+			create_date,
+			update_date, 
+			remarks, 
+			login_device,
+			role_id,
+			facility_group_id,
+			inspect_device_type,
+			del_flag
+		) VALUES (
+			#{id},
+			#{loginName}, 
+			#{password},
+			#{name},
+			#{phone},
+			#{loginDate},
+			#{createDate},
+			#{updateDate}, 
+			#{remarks}, 
+			#{loginDevice},
+			#{roleId},
+			#{inspectDeviceType},
+			#{facilityGroupId},
+			0
+		)
+	</insert>
+	
+	<!-- 更新用户 -->
+	<update id="update">
+		UPDATE sys_user SET
+			login_name = #{loginName}, 
+			password = #{password},
+			name = #{name},
+			phone = #{phone},
+			login_date = #{loginDate},
+			update_date = #{updateDate}, 
+			remarks = #{remarks},
+			login_device = #{loginDevice},
+			role_id = #{roleId},
+			facility_group_id = #{facilityGroupId},
+			inspect_device_type = #{inspectDeviceType}
+		WHERE id = #{id}
+	</update>
+	
+	<!-- 逻辑删除用户 -->
+	<update id="delete">
+		UPDATE sys_user SET 
+			del_flag = 1
+		WHERE id = #{id}
+	</update>
+
+	<!-- 创建用户表 -->
+	<update id="createTable">
+		<![CDATA[
+		CREATE TABLE IF NOT EXISTS sys_user (
+		  id int AUTO_INCREMENT COMMENT '编号',
+		  login_name varchar(100) BINARY NOT NULL COMMENT '登录名',
+		  password varchar(100) NOT NULL COMMENT '密码',
+		  name varchar(100) NOT NULL COMMENT '姓名',
+		  phone varchar(200) DEFAULT NULL COMMENT '手机号',
+		  login_device varchar(100) DEFAULT NULL COMMENT '登录设备标识',
+		  role_id int COMMENT '用户级别',
+		  facility_group_id int COMMENT '用户归属设备组',
+		  inspect_device_type varchar(11) DEFAULT NULL COMMENT '巡检设备类型',
+		  login_date datetime DEFAULT NULL COMMENT '最后登陆时间',
+		  create_date datetime NOT NULL COMMENT '创建时间',
+		  update_date datetime NOT NULL COMMENT '更新时间',
+		  remarks varchar(255) DEFAULT NULL COMMENT '备注信息',
+		  del_flag char(1) NOT NULL DEFAULT '0' COMMENT '删除标记',
+		  PRIMARY KEY (`id`)
+		) COMMENT='用户表';
+		]]>
+	</update>
+
+	<!-- 初始化用户数据 -->
+	<update id="initTable">
+		INSERT INTO `sys_user` VALUES (1, 'admin', '02a3f0772fcca9f415adc990734b45c6f059c7d33ee28362c4852032', '系统管理员', '85338533', null, 1, 1, '1,2,3,4', null, now(), now(), '最高管理员', '0');
+	</update>
+
+	<update id="initTable1">
+		INSERT INTO `sys_user` VALUES (2, 'b_admin', '02a3f0772fcca9f415adc990734b45c6f059c7d33ee28362c4852032', '管理者', '1', null, 2, 1, '1,2,3,4', null, now(), now(), '', '0');
+	</update>
+
+	<update id="initTable2">
+		INSERT INTO `sys_user` VALUES (3, 'c_admin', '02a3f0772fcca9f415adc990734b45c6f059c7d33ee28362c4852032', '巡检人', '2', null, 3, 1, '1', null, now(), now(), '', '0');
+	</update>
+
+</mapper>

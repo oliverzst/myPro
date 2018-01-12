@@ -1,0 +1,6 @@
+/*响应式样式*/
+@media (max-width: 320px){
+    .filter-item{
+        min-width: 75px;
+    }
+}

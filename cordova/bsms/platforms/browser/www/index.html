@@ -1,0 +1,1927 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="wap-font-scale" content="no">
+        <meta http-equiv="Content-Security-Policy" content="default-src 'self' data: gap: https://ssl.gstatic.com 'unsafe-eval'; style-src 'self' 'unsafe-inline'; media-src *;connect-src *;">
+        <meta name="format-detection" content="telephone=no">
+        <meta name="msapplication-tap-highlight" content="no">
+        <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width">
+        <link rel="stylesheet" type="text/css" href="element-ui/element-ui.css">
+        <link rel="stylesheet" type="text/css" href="css/index.css">
+        <link rel="stylesheet" type="text/css" href="css/responsive.css">
+        <link rel="stylesheet" type="text/css" href="./js/minirefresh/minirefresh.min.css">
+        <link rel="stylesheet" type="text/css" href="css/commonTips.css">
+        <link rel="stylesheet" type="text/css" href="font-awesome/css/font-awesome.min.css">
+        <script type="text/javascript" src="js/jquery-1.11.0.min.js"></script>
+        <script type="text/javascript" src="js/echarts.min.js"></script>
+        <script type="text/javascript" src="js/alertPopShow.js"></script>
+        
+        <title>基站巡检系统</title>
+    </head>
+    <body>
+        <div id="mask">
+            <div class="center">初始化中...</div>
+        </div>
+        <div id='index' style="display:none;">
+            <div id="header">
+                <div class="title center">{{title}}</div>
+                <div class="go-back center-vertical" 
+                    v-show="goBackIcon"
+                    @click="goBack()"></div>
+            </div>
+            <!-- 主面板 -->
+            <div id="main"
+                :class="{'hide-footer':!isShowFooter}"
+                v-show="content=='facility'||content=='task'||content=='alarm'||content=='myself'">
+                <!-- 设备板块 -->
+                <div v-show="content=='facility'&& facilityList.length>0">
+                    <div class="facility-search-box">
+                        <input type="text"
+                            class="facility-search-input"
+                            @focus="isShowFooter=false;"
+                            @blur="isShowFooter=true;"
+                            v-model.trim="facilitySearchCondition"
+                            :placeholder="'在全部'+facilityList.length+'个设备中搜索'">
+                        <div class="clear-facility-search"
+                            @click="facilitySearchCondition=''"
+                            v-show="facilitySearchCondition.length>0">x</div>
+                    </div>
+                </div>
+                <div v-show="content=='facility'" class="content-box" id="facilityList">
+                    <!-- 设备列表 -->
+                    <div class="content facilityList"> 
+                        <div class="">
+                            <div class="panel facility-item"
+                                :class="{'off-line': facility.rcuStatus == 0}" 
+                                v-for="(facility,facilityIndex) in facilityList_computed"
+                                
+                                @click="goToFacilityDetail(facility)">
+                                <div class="panel-head-icon"
+                                    :class="{'base-head-icon':facility.type==1}"></div>
+                                <div class="facility-name">
+                                    {{facility.name||"未知"}}
+                                </div>
+                                <div class="facility-last-inspect">
+                                    <div class="facility-last-inspect-tip"></div>
+                                    <div class="facility-last-inspect-time">
+                                        {{facility.status}}
+                                    </div>
+                                </div>
+                                <div class="facility-last-inspect">
+                                    <div class="facility-last-inspect-tip">上次巡检：</div>
+                                    <div class="facility-last-inspect-time">
+                                        {{facility.lastInspect && formatTime(facility.lastInspect.endTime) || "无"}}
+                                    </div>
+                                </div>
+                                <div class="facility-alarm-clickArea"
+                                    v-show="facility.alarms.length>0"
+                                    @click.stop="goToFacilityAlarm(facility.name)">
+                                    <div class="facility-alarm center flush">
+                                        <div class="facility-alarm-count">{{facility.alarms.length}}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div v-show="facilityList.length==0" class="center">没有设备</div>
+                </div>
+                <!-- 任务板块 -->
+                <div v-show="content=='task'" class="content-box has-filter-box">
+                    <!-- 任务过滤 -->
+                    <div class="filter-box">                    
+                        <div class="filter">
+                            <div class="filter-item" 
+                                :class="{active:taskFilter=='acceptable'}"
+                                @click="showAcceptableTask()"
+                                v-if="userInfo.roleId==3">
+                                可接任务
+                            </div>
+                            <div class="filter-item" 
+                                :class="{active:taskFilter=='my'}"
+                                @click="showMyTask()"
+                                v-if="userInfo.roleId==3">
+                                已接任务
+                            </div>
+                            <div class="filter-item" 
+                                :class="{active:taskFilter=='myRelease'}"
+                                @click="showMyReleaseTask()"
+                                v-if="userInfo.roleId!=3">
+                                我的发布
+                            </div>
+                            <div class="filter-item" 
+                                :class="{active:taskFilter=='publishTask'}"
+                                @click="taskFilter='publishTask'"
+                                v-if="userInfo.roleId!=3">
+                                发布任务
+                            </div>
+                        </div>
+                    </div>
+                    <!-- 任务列表 -->
+                    <div class="content"
+                        v-show="taskFilter!='publishTask'" id="taskList">
+                        <div style="height: 100%;">
+                            <div class="panel task-item" v-if="taskList"
+                                v-for="(task,taskIndex) in taskList"
+                                :class="{active:taskExtendId==task.id}"
+                                @click="checkTask(task)">
+                                <div class="panel-head-icon"
+                                    :class="{'task-type-1-icon':task.type==1,'task-type-2-icon':task.type==2,'task-type-3-icon':task.type==3}"></div>
+                                <div class="task-name">
+                                    {{task.taskName || "未知"}}
+                                    <div class="is-new-task icon-flag"
+                                        v-show="!task.isOld"></div>
+                                </div>
+                                <div class="task-detail"
+                                    v-if="taskFilter!='myRelease' && task.facilityName">
+                                    <div class="task-releaser-tip"></div>
+                                    <div class="task-releaser">
+                                        {{task.facilityName }}&nbsp;&nbsp;{{task.releaseUser.name}}
+                                    </div>
+                                </div>
+                                <div class="task-detail"
+                                    v-if="taskFilter!='myRelease' && !task.facilityName">
+                                    <div class="task-releaser-tip"></div>
+                                    <div class="task-releaser">
+                                        发布者：{{task.releaseUser.name}}
+                                    </div>
+                                </div>
+                                <div class="task-detail task-detail-out"
+                                    v-if="taskFilter!='myRelease'">
+                                    <div class="task-release-tip">发布时间：</div>
+                                    <div class="task-release-time">
+                                        {{formatTime(task.releaseTime)}}
+                                    </div>
+                                </div>
+                                <div class="task-detail"
+                                    v-if="taskFilter=='myRelease'&&task.state==0">
+                                    <div class="task-release-tip"></div>
+                                    <div class="task-release-time">
+                                        {{task.facilityName}}&nbsp;&nbsp;暂时无人接受任务
+                                    </div>
+                                </div>
+                                <div class="task-detail"
+                                    v-if="taskFilter=='myRelease'&&task.state==1&&!task.inspectRecords">
+                                    <div class="task-release-tip"></div>
+                                    <div class="task-release-time">
+                                        {{task.facilityName}}&nbsp;&nbsp;{{task.inspectUser&&task.inspectUser.name}}已接受任务
+                                    </div>
+                                </div>
+                                <div class="task-detail task-detail-out"
+                                    v-if="taskFilter=='myRelease'&&task.state==1&&!task.inspectRecords">
+                                    <div class="task-release-tip">接受时间：</div>
+                                    <div class="task-release-time">
+                                        {{formatTime(task.inspectTime)}}
+                                    </div>
+                                </div>
+                                <div class="task-detail"
+                                    v-if="taskFilter=='myRelease'&&task.state==2&&!task.inspectRecords">
+                                    <div class="task-release-tip"></div>
+                                    <div class="task-release-time">
+                                        {{task.facilityName}}&nbsp;&nbsp;{{task.inspectUser&&task.inspectUser.name}}正在执行任务
+                                    </div>
+                                </div>
+                                <div class="task-detail task-detail-out"
+                                    v-if="taskFilter=='myRelease'&&task.state==2&&!task.inspectRecords">
+                                    <div class="task-release-tip">开始时间：</div>
+                                    <div class="task-release-time">
+                                        {{formatTime(task.signInTime)}}
+                                    </div>
+                                </div>
+                                <div class="task-detail"
+                                    v-if="taskFilter=='myRelease'&&task.inspectRecords">
+                                    <div class="task-release-tip"></div>
+                                    <div class="task-release-time">
+                                        {{task.facilityName}}&nbsp;&nbsp;{{task.inspectUser&&task.inspectUser.name}}已完成任务
+                                    </div>
+                                </div>
+                                <div class="task-detail"
+                                    v-if="taskFilter=='myRelease'&&task.inspectRecords">
+                                    <div class="task-release-tip">完成时间：</div>
+                                    <div class="task-release-time">
+                                        {{formatTime(task.submitTime)}}
+                                    </div>
+                                </div>
+                                <div class="task-detail task-detail-out">
+                                    <div class="task-description-tip">任务描述：</div>
+                                    <div class="task-description">
+                                        {{task.description}}
+                                    </div>
+                                </div>
+                                <div class="task-accept" 
+                                    @click.stop="acceptTask(task)"
+                                    v-show="taskFilter=='acceptable'">
+                                    <div class="task-icon task-icon-jieshourenwu"></div>
+                                    <div class="task-label">接受任务</div>
+                                </div>
+                                <div class="task-inspect" 
+                                    @click.stop="doTask(task)"
+                                    v-show="taskFilter=='my' && !task.inspectRecords">
+                                    <div class="task-icon task-icon-zhixingrenwu"></div>
+                                    <div class="task-label">执行任务</div>
+                                </div>
+                                <div class="task-inspect" 
+                                    @click.stop="doTask(task)"
+                                    v-show="taskFilter=='my' && task.inspectRecords">
+                                    <div class="task-icon task-icon-chongxinzhixing"></div>
+                                    <div class="task-label">重新执行</div>
+                                </div>
+                                <div class="task-inspect" 
+                                    @click.stop="finishTask(task)"
+                                    v-show="taskFilter=='myRelease'&&task.inspectRecords">
+                                    <div class="task-icon task-icon-jieshurenwu"></div>
+                                    <div class="task-label">结束任务</div>
+                                </div>
+                                <div class="task-inspect" 
+                                    @click.stop="deleteTask(task)"
+                                    v-show="taskFilter=='myRelease'&&task.state==0">
+                                    <div class="task-icon task-icon-quxiaorenwu"></div>
+                                    <div class="task-label">取消任务</div>
+                                </div>
+                            </div>
+                            <div class="getting-current-position center"
+                                v-show="isShowGettingCurrentPosition">
+                                    获取定位中...
+                            </div>
+                            <div v-if="taskList&& taskList.length==0" class="full-box">
+                                <div class="center">没有任务</div>
+                            </div>
+                            <div v-if="!taskList" class="full-box">
+                                <div class="center">                                    
+                                    <p>与服务器连接断开</p>
+                                    <p>下拉尝试重新连接</p>
+                                </div>
+                            </div> 
+                        </div>                       
+                    </div>
+                    <!-- 选择巡检类别 -->
+                    <div class="inspect-type-list-box"
+                        v-show="isShowSelectInspectType">
+                        <div class="inspect-type-lists-wrap center">
+                            <div class="close-inspect-type-list"
+                                @click="isShowSelectInspectType=false"></div>
+                            <ul class="inspect-type-lists">
+                                <li v-for="inspectType in inspectDeviceType"
+                                    class="inspect-type-list"
+                                    @click="selectInspectType(inspectType)">
+                                    {{inspectType.name}}
+                                </li>
+                            </ul>                                
+                        </div>
+                    </div>
+                    <!-- 发布任务 -->
+                    <div class="content"
+                        v-show="taskFilter=='publishTask'">
+                        <div class="table publishTask-content">
+                            <div class="table-row">
+                                <div class="table-td publishTask-content-name">名称</div>
+                                <div class="table-td publishTask-content-name-value">
+                                    <input type="text" 
+                                        placeholder="点击输入" 
+                                        @focus="isShowFooter=false;"
+                                        @blur="isShowFooter=true;"
+                                        v-model.trim="taskPublish.taskName">
+                                </div>
+                            </div>
+                            <div class="table-row">
+                                <div class="table-td publishTask-content-description">描述</div>
+                                <div class="table-td publishTask-content-description-value">
+                                    <input type="text" 
+                                        placeholder="点击输入" 
+                                        @focus="isShowFooter=false;"
+                                        @blur="isShowFooter=true;"
+                                        v-model.trim="taskPublish.taskDescription">
+                                </div>
+                            </div>
+                            <div class="table-row">
+                                <div class="table-td publishTask-content-task-type">任务类型</div>
+                                <div class="table-td publishTask-content-type-value">
+                                    <label class="select-task-type" :class="{active: taskPublish.type==1}">
+                                        <input type="radio" value="1" v-model="taskPublish.type">
+                                        <span>巡检</span>                                        
+                                    </label>
+                                    <label class="select-task-type" :class="{active: taskPublish.type==2}">
+                                        <input type="radio" value="2" v-model="taskPublish.type">
+                                        <span>值守</span>                                            
+                                    </label>
+                                    <label class="select-task-type" :class="{active: taskPublish.type==3}">
+                                        <input type="radio" value="3" v-model="taskPublish.type">
+                                        <span>抢修</span>                                            
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="table-row"
+                                v-show="taskPublish.type!=2">
+                                <div class="table-td publishTask-content-inspect-type">巡检类别</div>
+                                <div class="table-td publishTask-content-type-value"
+                                    @click="showSelectDeviceType()">
+                                    {{taskPublish.inspectDeviceTypeId.name || "点击选择"}}
+                                </div>
+                            </div>
+                            <div class="table-row"
+                                v-show="taskPublish.type==2">
+                                <div class="table-td publishTask-content-duty-time">值守时间</div>
+                                <div class="table-td publishTask-content-type-value">
+                                    <el-date-picker
+                                        :editable=false
+                                        v-model="taskPublish.inspectTime"
+                                        type="datetime"
+                                        placeholder="选择日期时间">
+                                    </el-date-picker>
+                                </div>
+                            </div>
+                            <div class="table-row">
+                                <div class="table-td publishTask-content-facility">设备</div>
+                                <div class="table-td publishTask-content-facility-value publishTask-content-value-plus"
+                                    @click="goToSelectFacility()">
+                                    <div class="selectedFacilityThumb">{{selectedFacilityThumb}}</div>
+                                </div>
+                            </div>
+                            <div class="table-row"
+                                v-show="taskPublish.type!=2&&taskPublish.inspectDeviceTypeId.name ||taskPublish.type==2 ">
+                                <div class="table-td publishTask-content-performer">执行人</div>
+                                <div class="table-td publishTask-content-performer-value publishTask-content-value-plus"
+                                    @click="goToSelectPerformer()">
+                                    <div class="selectedPerformerThumb">{{selectedPerformerThumb}}</div> 
+                                </div>
+                            </div>
+                        </div>
+                        <button class="surePublishTask" 
+                            @click="publishTask()"
+                            :disabled="!isPublishTaskBtnUsable">发布任务</button>
+                    </div>
+                </div>
+
+                <!-- 告警板块 -->
+                <div v-show="content=='alarm'" class="content-box has-filter-box">
+                    <!-- 告警过滤 -->
+                    <div class="filter-box">                    
+                        <div class="filter">
+                            <div class="filter-item" 
+                                :class="{active:alarmFilter=='all'}"
+                                @click="showAllAlarm()">
+                                全部
+                            </div>
+                            <div class="filter-item" 
+                                :class="{active:alarmFilter=='serious'}"
+                                @click="showSeriousAlarm()">
+                                严重
+                            </div>
+                            <div class="filter-item" 
+                                :class="{active:alarmFilter=='normal'}"
+                                @click="showNormalAlarm()">
+                                一般
+                            </div>
+                            <div class="filter-item" 
+                                :class="{active:alarmFilter=='slight'}"
+                                @click="showSlightAlarm()">
+                                轻微
+                            </div>
+                        </div>
+                    </div>
+                    <!-- 告警列表 -->
+                    <div class="content" id="alarmList">
+                        <div style="height: 100%;">
+                            <div class="panel alarm-item" v-if="alarmList"
+                                :class="{active:facilityAlarmExtendIndex==alarmIndex}"
+                                v-for="(alarm,alarmKey,alarmIndex) in alarmList_computed"
+                                @click="checkAlarm(alarmIndex)">
+                                <div class="alarm-name">
+                                    告警设备：{{alarmKey}}
+                                </div>
+                                <div class="alarm-count">告警条数：{{alarm.length}}</div>
+                                <div class="table facility-alarm-content"
+                                    :class="{active:facilityAlarmExtendIndex==alarmIndex}">
+                                    <div class="table-row">
+                                        <div class="table-th facility-alarm-item-description">描述</div>
+                                        <div class="table-th facility-alarm-item-type">类型</div>
+                                        <div class="table-th facility-alarm-item-proposal">建议</div>
+                                        <div class="table-th facility-alarm-item-time">时间</div>
+                                    </div>
+                                    <div>
+                                        <div class="table-row table-row-scroll"
+                                            :class="{serious:alarmItem.level==0,
+                                                     normal:alarmItem.level==1,
+                                                     slight:alarmItem.level==2}"
+                                            v-for="(alarmItem,alarmItemIndex) in alarm">
+                                            <div class="table-td table-td-scroll facility-alarm-item-description">
+                                                <div class="alarm-level"></div>
+                                                {{alarmItem.description}}
+                                            </div>
+                                            <div class="table-td table-td-scroll facility-alarm-item-type">
+                                                {{alarmItem.code}}
+                                            </div>
+                                            <div class="table-td table-td-scroll facility-alarm-item-proposal">
+                                                {{alarmItem.proposal}}
+                                            </div>
+                                            <div class="table-td table-td-scroll facility-alarm-item-time">
+                                                {{formatTime(alarmItem.alarmTimestamp)}}
+                                            </div>
+                                        </div>                                        
+                                    </div>                                    
+                                </div>
+                            </div>                        
+                            <div v-if="alarmList&& alarmList.length==0" class="full-box">
+                                <div class="center">没有告警</div>
+                            </div>
+                            <div v-if="!alarmList" class="full-box">
+                                <div class="center">
+                                    <p>与服务器连接断开</p>
+                                    <p>下拉尝试重新连接</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- 我的板块 -->
+                <div v-show="content=='myself'" class="content-box">
+                    <div class="content">                            
+                        <div class="my-panel mymessage-item">
+                            <div class='sysuser' @click="goToContent('userMessage','我的信息')">{{user.userName}}</div>
+                            <div >用户角色:{{user.roleName}}</div>
+                        </div>
+                        <div class="black-content"></div>
+                        <div class="my-panel mymenu-item menuicon-permission" v-show="userInfo.roleId == 1"
+                        @click="goToContent('permissionConfig','权限管理');getPerUserList(userHttp)">
+                            权限管理
+                            <span class="menu-go"></span>
+                        </div>
+                        <div class="my-panel mymenu-item menuicon-resetPsd" v-show="userInfo.roleId == 1"
+                        @click="goToContent('resetPsd','重置密码');getResetPsdUserList(userHttp)">
+                            密码重置
+                            <span class="menu-go"></span>
+                        </div>
+                        <div class="my-panel mymenu-item menuicon-usermanagement" v-show="userInfo.roleId == 1 || userInfo.roleId == 2"
+                        @click="goToContent('UserManagement','用户管理')">
+                            用户管理
+                            <span class="menu-go"></span>
+                        </div>
+                        <div class="my-panel mymenu-item menuicon-config" v-show="userInfo.roleId == 1 || userInfo.roleId == 2"
+                        @click="goToContent('DeviceManagement','设备管理')">
+                            设备管理
+                            <span class="menu-go"></span>
+                        </div>
+                        <div class="my-panel mymenu-item menuicon-log" v-show="userInfo.roleId == 1 || userInfo.roleId == 2"
+                        @click="goToContent('LogManagement','日志管理')">
+                            日志管理
+                            <span class="menu-go"></span>
+                        </div>
+                        <div class="my-panel mymenu-item menuicon-log" v-show="userInfo.roleId == 3"
+                        @click="goToContent('myLog','我的日志')">
+                            我的日志
+                            <span class="menu-go"></span>
+                        </div>
+                        <div class="my-panel mymenu-item menuicon-about"
+                        @click="goToContent('about','关于软件')">
+                            关于软件
+                            <span class="menu-go"></span>
+                        </div>
+                        <div class="my-panel myexit-item" @click="UserExit()">
+                            退出登录
+                        </div>
+                    </div>
+                </div>
+                <div id="footer" v-show="isShowFooter">
+                    <div class="footer-item-box" 
+                        :class="{active:content=='facility'}" 
+                        @click="goToFacility()">
+                        <div class="footer-item center">
+                            <div class="footer-icon footer-icon-facility"></div>
+                            <div class="footer-label">设备</div>
+                        </div>
+                    </div>
+                    <div class="footer-item-box" 
+                        :class="{active:content=='task'}" 
+                        @click="goToTask()">
+                        <div class="footer-item center">
+                            <div class="footer-icon footer-icon-task"></div>
+                            <div class="footer-label">任务</div>
+                            <div class="hasNewTask"
+                                v-show="isShowHasNewTask"></div>
+                        </div>
+                    </div>
+                    <div class="footer-item-box" 
+                        :class="{active:content=='alarm'}" 
+                        @click="goToAlarm()">
+                        <div class="footer-item center">
+                            <div class="footer-icon footer-icon-alarm"></div>
+                            <div class="footer-label">告警</div>
+                            <div class="hasNewAlarm"
+                                v-show="isShowHasNewAlarm"></div>
+                        </div>
+                    </div>
+                    <div class="footer-item-box" 
+                        :class="{active:content=='myself'}" 
+                        @click="goToMy()">
+                        <div class="footer-item center">
+                            <div class="footer-icon footer-icon-myself"></div>
+                            <div class="footer-label">我的</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="body"
+                v-show="content!=='facility'&&content!=='task'&&content!=='alarm'&&content!=='myself'">
+                <!-- 设备详情板块 -->
+                <div v-show="content=='facilityDetail'" 
+                    class="content-box has-filter-box">
+                    <!-- 设备详情过滤 -->
+                    <div class="filter-box">                    
+                        <div class="filter">
+                            <div class="filter-item" 
+                                :class="{active:facilityDetailFilter=='detail'}"
+                                @click="facilityDetailFilter='detail'">
+                                详情
+                            </div>
+                            <!-- <div class="filter-item" 
+                                :class="{active:facilityDetailFilter=='inspect'}"
+                                @click="facilityDetailFilter='inspect'">
+                                巡检
+                            </div> -->
+                            <div class="filter-item" 
+                                :class="{active:facilityDetailFilter=='history'}"
+                                @click="facilityDetailFilter='history'">
+                                历史
+                            </div>
+                        </div>
+                    </div>
+                    <!-- 设备详情面板 -->
+                    <div class="facility-content-box content has-bottom-btn" v-show="facilityDetailFilter=='detail'" >
+                        <div class="table facility-content">
+                            <div class="table-row table-row-scroll" 
+                                v-for="(facilityDetailValue,facilityDetailKey) in currentFacility_computed">
+                                <div class="table-td table-td-scroll facility-detail-item-name">
+                                    {{facilityDetailKey}}
+                                </div>
+                                <div class="table-td table-td-scroll facility-detail-item-value">
+                                    {{facilityDetailValue}}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="sign-in">
+                            <button class="sign-in-btn btn" @click="facilitySignin();">到站签到</button>
+                        </div>
+                        <div class="getting-current-position center"
+                            v-show="isShowGettingCurrentPosition">
+                                获取定位中...
+                        </div>
+                        <div class="inspect-type-box"
+                            v-show="isShowSelectInspectType_base"
+                            :class="{'inspect-type-1':inspectDeviceType.length==1,'inspect-type-2':inspectDeviceType.length==2,'inspect-type-3':inspectDeviceType.length==3,'inspect-type-4':inspectDeviceType.length>=4}">
+                            <div class="inspect-type-label"
+                                v-show="inspectDeviceType.length>1">选择巡检类别</div>
+                            <div class="inspect-type-btn-box"
+                                v-for="(deviceType,deviceTypeIndex) in inspectDeviceType">
+                                <button class="btn inspect-type-btn"
+                                    @click="goToInspect(deviceType)"
+                                    v-if="inspectDeviceType.length==1">
+                                    {{deviceType.name}}巡检
+                                </button>
+                                <button class="btn inspect-type-btn"
+                                    @click="goToInspect(deviceType)"
+                                    v-if="inspectDeviceType.length>1">
+                                    {{deviceType.name}}
+                                </button>
+                            </div>
+                            
+                            <!-- <button class="btn go-to-facility-inspect"
+                                v-if="!isContinueInspect"
+                                @click="goToInspect()">进入巡检</button>
+                            <button class="btn go-to-facility-inspect"
+                                v-if="isContinueInspect"
+                                @click="goToInspect()">继续巡检</button> -->
+                        </div>
+                    </div>
+                    
+                    <!-- 设备详情中的历史面板 -->
+                    <div class="facility-content-box content" v-show="facilityDetailFilter=='history'">
+                        <button class="sure-btn">
+                            <a :href="taskUrlPrefix + '/exportInspectExcelByFacility?facilityDomain='+currentFacility.domain" target="_blank">导出</a>
+                        </button>
+                        <div class="table facility-content">
+                            <div class="table-row">
+                                <div class="table-th facility-history-item-name">项目</div>
+                                <div class="table-th facility-history-item-time">时间</div>
+                                <div class="table-th facility-history-item-handler">巡检人</div>
+                            </div>
+                            <div v-show="!currentFacilityHistory.length" class="table-row">
+                                <div class="table-td">无数据</div>
+                            </div>
+                            <div class="table-row table-row-scroll"
+                                v-for="(facilityHistoryItem,facilityHistoryItemIndex) in currentFacilityHistory"
+                                @click="goToFacilityHistoryItem(facilityHistoryItem)"
+                                style="overflow:hidden">
+                                <div class="table-td table-td-scroll facility-history-item-name">{{historyItemInspectType(facilityHistoryItem)}}</div>
+                                <div class="table-td table-td-scroll facility-history-item-time">{{formatTime(facilityHistoryItem.endTime)}}</div>
+                                <div class="table-td table-td-scroll facility-history-item-handler">{{facilityHistoryItem.inspectUser.name}}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- 设备历史独立板块 -->
+                <div class="content-box" v-show="content=='facilityHistory'">
+                    <button class="sure-btn">
+                        <a :href="taskUrlPrefix + '/exportInspectExcelByFacility?facilityDomain='+currentFacility.domain" target="_blank">导出</a>
+                    </button>
+                    <div class="table facility-content">
+                        <div class="table-row">
+                            <div class="table-th facility-history-item-name">项目</div>
+                            <div class="table-th facility-history-item-time">时间</div>
+                            <div class="table-th facility-history-item-handler">巡检人</div>
+                        </div>
+                        <div v-show="!currentFacilityHistory.length" class="table-row">
+                            <div class="table-td">无数据</div>
+                        </div>
+                        <div class="table-row"
+                            v-for="(facilityHistoryItem,facilityHistoryItemIndex) in currentFacilityHistory"
+                            @click="goToFacilityHistoryItem(facilityHistoryItem)"
+                            style="overflow:hidden">
+                            <div class="table-td facility-history-item-name">{{historyItemInspectType(facilityHistoryItem)}}</div>
+                            <div class="table-td facility-history-item-time">{{formatTime(facilityHistoryItem.endTime)}}</div>
+                            <div class="table-td facility-history-item-handler">{{facilityHistoryItem.inspectUser.name}}</div>
+                        </div>
+                    </div>
+                </div>
+                <!-- 设备巡检独立板块 -->
+                <div class="content-box has-bottom-btn inspect" 
+                    v-show="content=='inspect'"> 
+                    <div class="inspect-wrap"
+                        v-show="currentInspectType!=null">
+                        <!-- 添加巡检项，已屏蔽-->
+                        <div class="table-row add-inspect-item-row"
+                            :class="{active:activeAddInspectItem}"> 
+                            <div class="add-inspect-item-icon"     
+                                v-show="!activeAddInspectItem"
+                                @click="activeAddInspectItem=!activeAddInspectItem;addInspectItemName=''">+</div> 
+                            <div class="table-td facility-inspect-item-name" style="margin-left: 10px;width:33%;">
+                                <input type="text" placeholder="添加巡检项" class="add-inspect-item-input"
+                                    v-model.trim="addInspectItemName">
+                            </div>                      
+                            <div class="table-td facility-inspect-item-result1" style="text-align: right;">                            
+                                <button style="width:60%;height:60%;"
+                                    class="btn"
+                                    @click="sureAddInspectItem()">
+                                    确定
+                                </button>
+                            </div>
+                            <div class="close-add-inspect"
+                                @click="activeAddInspectItem=false">X
+                            </div>
+                        </div>
+                        <!-- 常规巡检 -->
+                        <div class="inspect-title">
+                            <div class="inspect-name center">常规巡检</div>
+                            <div class="is-enabled-facility-inspect">
+                                <div class="switch switch-small"
+                                    style="float:left;"
+                                    :class="{'switch-on':isEnabledFacilityInspect,'switch-off':!isEnabledFacilityInspect}">
+                                    <div class="switch-btn"></div>
+                                    <input class="switch-input" type="checkbox" v-model="isEnabledFacilityInspect">
+                                </div>
+                                <span style="float:left;">{{isEnabledFacilityInspect?"记录":"不记录"}}</span>
+                            </div>
+                        </div>
+                        <div class="table facility-inspect-content normal-inspect"
+                            :class="{active:isEnabledFacilityInspect}">
+                            <div class="table-row">
+                                <div class="table-th facility-inspect-item-name">巡检项目</div>
+                                <div class="table-th facility-inspect-item-result1">检查结果</div>
+                                <div class="table-th facility-inspect-item-result2">正常与否</div>
+                                <div class="table-th facility-inspect-item-result3">备注</div>
+                            </div>
+                            <div class="table-row" 
+                                v-for="(facilityInspectItem,facilityInspectIndex) in facilityInspect">
+                                <div class="table-td facility-inspect-item-name">{{facilityInspectItem.name}}</div>
+                                <div class="table-td facility-inspect-item-result1">
+                                    <div class="switch center"
+                                        :class="{'switch-on':facilityInspectItem.inspectResult.preResult,'switch-off':!facilityInspectItem.inspectResult.preResult}"
+                                        >
+                                        <div class="switch-label switch-label-on">正常</div>
+                                        <div class="switch-label switch-label-off">异常</div>
+                                        <div class="switch-btn"></div>
+                                        <input class="switch-input" type="checkbox" v-model="facilityInspectItem.inspectResult.preResult"
+                                            @click="checkPreResult(facilityInspectItem)">
+                                    </div>
+                                </div>
+                                <div class="table-td facility-inspect-item-result2">
+                                    <div class="switch center"
+                                        :class="{'switch-on':facilityInspectItem.inspectResult.result,'switch-off':!facilityInspectItem.inspectResult.result}"
+                                        >
+                                        <div class="switch-label switch-label-on">正常</div>
+                                        <div class="switch-label switch-label-off">异常</div>
+                                        <div class="switch-btn"></div>
+                                        <input class="switch-input" type="checkbox" v-model="facilityInspectItem.inspectResult.result">
+                                    </div>
+                                </div>
+                                <div class="table-td facility-inspect-item-result3"
+                                    :class="{'need-add':!facilityInspectItem.inspectResult.remarks}"
+                                    @click="goToAddFacilityInspectRemarks(facilityInspectItem)">
+                                    {{facilityInspectItem.inspectResult.remarks}}
+                                </div>
+                                <div class="remove-inspect-item"
+                                    @click="removeInspectItem(facilityInspectIndex)">-
+                                </div>
+                            </div>
+                            <div class="table-row" style="border:none;">
+                                <div class="table-td facility-inspect-item-name">总结</div>
+                                <div class="facility-inspect-remarks table-td"
+                                    @click="goToAddFacilityInspectRemarks()">
+                                    {{facilityInspectRemarks.comment || "点击添加总结信息"}}
+                                    <div class="need-add-box"
+                                        v-show="!facilityInspectRemarks.comment.length">
+                                        <div class="need-add"></div>
+                                    </div>                                    
+                                </div>
+                            </div>
+                        </div>
+                        <!-- 故障处理 -->
+                        <div v-for="(faultItem,faultItemIndex) in faults"
+                            :class="{active:faultItem.isExtended,'is-handled':faultItem.isHandled}">
+                            <div class="inspect-title inspect-fault-title"
+                                @click="faultItem.isExtended=!faultItem.isExtended">
+                                <div class="inspect-name inspect-fault-name center">故障{{faultItemIndex+1}}处理</div>
+                                <!-- <div class="inspect-toggle"></div> -->
+                                <div class="is-fault-handled"
+                                    @click.stop="">
+                                    <span>{{faultItem.isHandled?"已解决":"未解决"}}</span>
+                                    <div class="switch switch-small"
+                                        :class="{'switch-on':faultItem.isHandled,'switch-off':!faultItem.isHandled}">
+                                        <div class="switch-btn"></div>
+                                        <input class="switch-input" type="checkbox"
+                                            v-model="faultItem.isHandled">
+                                    </div>
+                                </div>
+                                <div class="remove-fault-item-box"
+                                    :class="{active:faultItem.isShowRemoveBtn}">
+                                    <button class="remove-fault-item-btn remove-fault-item-btn-del"
+                                        @click.stop="removeFaultItem(faultItemIndex)">删除该故障</button>
+                                    <button class="remove-fault-item-btn remove-fault-item-btn-cancel"
+                                        @click.stop="faultItem.isShowRemoveBtn=false">取消</button>
+                                    <div class="remove-fault-item-flag"
+                                        @click.stop="faultItem.isShowRemoveBtn=true">x</div>
+                                </div>
+                            </div>
+                            <div class="table facility-inspect-content fault-item">
+                                <div class="table-row fault-name-box">
+                                    <div class="table-td fault-label">模块</div>
+                                    <div class="table-td fault-value"
+                                        @click="showSelectFaultModule(faultItem)">
+                                        {{faultItem.name.name || "点击选择"}}
+                                    </div>
+                                </div>
+                                <div class="table-row fault-index-box">
+                                    <div class="table-td fault-label">序号</div>
+                                    <div class="table-td fault-value">
+                                        <span class="reduce btn"
+                                            @click="faultItem.index>1?faultItem.index--:faultItem.index">-</span>
+                                        <span>{{faultItem.index}}</span>       
+                                        <span class="increase btn"
+                                            @click="faultItem.index++">+</span>
+                                    </div>
+                                </div>
+                                <div class="table-row fault-description-box">
+                                    <div class="table-td fault-label">故障现象</div>
+                                    <div class="table-td fault-value"
+                                        :class="{'need-add':faultItem.description.length==0}"
+                                        @click="goToAddFacilityInspectFaultRecord(faultItem,'故障现象')">
+                                        {{faultItem.description}}
+                                    </div>
+                                </div>
+                                <div class="table-row fault-handle-box">
+                                    <div class="table-td fault-label">处理过程</div>
+                                    <div class="table-td fault-value"
+                                        :class="{'need-add':faultItem.handle.length==0}"
+                                        @click="goToAddFacilityInspectFaultRecord(faultItem,'处理过程')">
+                                        {{faultItem.handle}}
+                                    </div>
+                                </div>
+                                <div class="table-row fault-handle-box">
+                                    <div class="table-td fault-label">添加图片</div>
+                                    <div class="table-td fault-value">
+                                        <div class="fault-pic-thumb-box">
+                                            <div class="fault-pic-thumb"
+                                                v-for="(pic,picIndex) in faultItem.photo">
+                                                <img class="fault-pic center"
+                                                    :src="pic"
+                                                    @click="showBigPicture(faultItem,picIndex)">
+                                                </img>
+                                            </div>                                            
+                                        </div>
+                                        <div class="get-picture-box">
+                                            <div class="get-picture get-picture-camera"
+                                                @click="addFaultPicture_camera(faultItem)"></div>
+                                            <div class="get-picture get-picture-picLib"
+                                                @click="addFaultPicture_local(faultItem)"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="add-fault-item">
+                            <div class="add-fault-btn-box">
+                                <button class="btn add-fault-btn"
+                                    @click="addFaultItem()">
+                                    添加更多故障处理记录
+                                </button>
+                            </div>                            
+                        </div>
+                        
+                    </div>
+                    <div class="inspect-wrap"
+                        v-show="currentInspectType==null">
+                        <!-- 值守任务 -->
+                        <div v-for="(duty,dutyIndex) in dutys">
+                            <div class="inspect-title">
+                                <div class="inspect-name center">值守任务</div>
+                                <div class=""></div>
+                            </div>
+                            <div class="table facility-inspect-content duty-item">
+                                <div class="table-row duty-content-box">
+                                    <div class="table-td duty-label">内容</div>
+                                    <div class="table-td duty-value">
+                                        <input class="duty-item-input" 
+                                            type="text" 
+                                            placeholder="输入内容"
+                                            v-model.trim="duty.content">
+                                    </div>
+                                </div>
+                                <div class="table-row duty-place-box">
+                                    <div class="table-td duty-label">地点</div>
+                                    <div class="table-td duty-value">
+                                        <input class="duty-item-input" 
+                                            type="text" 
+                                            placeholder="输入内容"
+                                            v-model.trim="duty.place">
+                                    </div>
+                                </div>
+                                <div class="table-row table-row-scroll duty-records-box"
+                                    v-for="(dutyRecord,dutyRecordIndex) in duty.records">
+                                    <div class="table-td duty-label">记录{{dutyRecordIndex+1}}</div>
+                                    <div class="table-td duty-value">
+                                        <input class="duty-item-input" 
+                                            type="text" 
+                                            placeholder="输入内容"
+                                            v-model.trim="dutyRecord.content">
+                                    </div>
+                                </div>
+                                <div class="add-duty-record"
+                                    @click="addDutyRecord(duty)">+</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="btn-bottom-box">
+                        <!-- <div class="facility-inspect-op-btn-box2">
+                            <div class="facility-inspect-op-btn">
+                                帮助
+                            </div>
+                        </div> -->
+                        <div class="facility-inspect-op-btn-box3">
+                            <button class="facility-inspect-op-btn btn"
+                                :disabled="!isSubmitInspectBtnUsable"
+                                @click="commitInspect()">
+                                {{ commitInspectBtnText }}
+                            </button>
+                            <button class="facility-inspect-op-btn btn pre-commit-inspect-btn"
+                                v-show="isShowPreCommitTaskBtn&&currentInspectBindTasks.length"
+                                @click="isShowInspectBindTask=true;isShowPreCommitTaskBtn=false;">
+                                绑定任务并提交
+                            </button>
+                        </div>
+                        <div class="facility-inspect-op-btn-box1">
+                            <button class="facility-inspect-op-btn btn save-draft"                               
+                                @click="saveDraft()">
+                                存为草稿
+                            </button>
+                        </div>
+                    </div>
+                    <div class="inspect-bind-task-box"
+                        v-show="isShowInspectBindTask">
+                        <div class="close-inspect-bind-task-box"
+                            @click="isShowInspectBindTask=false;isShowPreCommitTaskBtn=true;">
+                        </div>
+                        <ul class="inspect-bind-task-list">
+                            <li class="inspect-bind-task-item"
+                                v-for="(bindTask,bindTaskIndex) in currentInspectBindTasks">
+                                <label>
+                                    <input type="checkbox" 
+                                        class="inspect-bind-task-input"
+                                        :value="bindTask.id"
+                                        v-model="currentSelectedInspectBindTasks">
+                                    {{bindTask.taskName}}
+                                </label>
+                                
+                            </li>
+                        </ul>
+                    </div>
+                    <button class="sure-btn"
+                        v-show="currentInspectType"
+                        @click="showFacilityHistory()">历史
+                    </button>
+                </div>
+                
+                <!-- 选择故障模块 -->
+                <div class="fault-module-list-box"
+                    v-show="isShowSelectFaultModule">
+                    <div class="fault-module-lists-wrap center">
+                        <div class="close-select-fault-module"
+                            @click="isShowSelectFaultModule=false"></div>
+                        <ul class="fault-module-lists">
+                            <li v-for="faultModule in inspectFaultModule"
+                                class="fault-module-list"
+                                @click="selectFaultModule(faultModule)">
+                                {{faultModule.name}}
+                            </li>
+                        </ul>                                
+                    </div>
+                </div>
+                <div v-show="content=='showBigPicture'" class="content-box">
+                    <img class="big-picture center" :src="bigPicture" alt="图片无法预览">
+                    <button class="sure-btn"
+                        v-show="isShowDelPicBtn"
+                        @click="removePicture()">删除</button>
+                </div>
+                <!-- 设备历史记录项详情板块 -->
+                <div v-show="content=='facilityHistoryItemDetail'" class="content-box history-detail">
+                    <div class="content">
+                        <div class="table facility-history-item-detail">
+                            <div class="table-row"
+                                v-for="(facilityHistoryItemDetail,facilityHistoryItemDetailKey) in currentFacilityHistoryItem_computed">
+                                <div class="table-td facility-history-item-detail-name">{{facilityHistoryItemDetailKey}}</div>
+                                <div class="table-td facility-history-item-detail-value">
+                                    {{facilityHistoryItemDetail}}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="normal-inspect-history"
+                            v-show="currentFacilityHistoryItem.type !=2">
+                            <div class="inspect-title">
+                                <div class="inspect-name center">常规巡检</div>
+                            </div>
+                            <div class="table facility-inspect-content normal-inspect active">
+                                <div class="table-row">
+                                    <div class="table-th facility-inspect-item-name">巡检项目</div>
+                                    <div class="table-th facility-inspect-item-result1">检查结果</div>
+                                    <div class="table-th facility-inspect-item-result2">处理结果</div>
+                                    <div class="table-th facility-inspect-item-result3">备注</div>
+                                </div>
+                                <div class="table-row table-row-scroll"
+                                    :class="{historyRemarks:remark.comment!==undefined}"
+                                    v-for="remark in currentFacilityHistoryItemRemarks_computed">
+                                    <div class="table-td table-td-scroll facility-inspect-item-name">{{remark.name||"备注"}}</div>
+                                    <div class="table-td table-td-scroll facility-inspect-item-result1"
+                                        v-if="remark.inspectResult&&remark.inspectResult.preResult">正常</div>
+                                    <div class="table-td table-td-scroll facility-inspect-item-result1"
+                                        v-if="remark.inspectResult&&!remark.inspectResult.preResult">异常</div>
+                                    <div class="table-td table-td-scroll facility-inspect-item-result2"
+                                        v-if="remark.inspectResult&&remark.inspectResult.result">正常</div>
+                                    <div class="table-td table-td-scroll facility-inspect-item-result2"
+                                        v-if="remark.inspectResult&&!remark.inspectResult.result">异常</div>
+                                    <div class="table-td table-td-scroll facility-inspect-item-result3"
+                                        v-if="remark.comment==undefined">
+                                        {{remark.inspectResult&&remark.inspectResult.remarks||"无"}}
+                                    </div>
+                                    <div class="table-td table-td-scroll historyRemarks-content"
+                                        v-if="remark.comment!==undefined">{{remark.comment || "无"}}</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+
+
+                        
+                        <!-- 故障处理历史 -->
+                        <div v-for="(faultItem,faultItemIndex) in currentFacilityHistoryItemFaults_computed"
+                            class="active facility-history-item-detail-remarks fault-item-box"
+                            :class="{'is-handled':faultItem.isResolve}"
+                            v-show="currentFacilityHistoryItem.type !=2">
+                            <div class="inspect-title inspect-fault-title">
+                                <div class="inspect-name inspect-fault-name center">故障{{faultItemIndex+1}}处理</div>
+                                <div class="is-fault-handled"
+                                    @click.stop="">
+                                    <span>{{faultItem.isResolve?"已解决":"未解决"}}</span>
+                                </div>
+                            </div>
+                            <div class="table facility-inspect-content fault-item">
+                                <div class="table-row table-row-scroll fault-name-box">
+                                    <div class="table-td table-td-scroll fault-label">模块</div>
+                                    <div class="table-td table-td-scroll fault-value">
+                                        {{faultItem.moduleName || "未选择"}}
+                                    </div>
+                                </div>
+                                <div class="table-row table-row-scroll fault-index-box">
+                                    <div class="table-td table-td-scroll fault-label">序号</div>
+                                    <div class="table-td table-td-scroll fault-value">
+                                        <span>{{faultItem.number}}</span>       
+                                    </div>
+                                </div>
+                                <div class="table-row table-row-scroll fault-description-box">
+                                    <div class="table-td table-td-scroll fault-label">故障现象</div>
+                                    <div class="table-td table-td-scroll fault-value">
+                                        {{faultItem.description}}
+                                    </div>
+                                </div>
+                                <div class="table-row table-row-scroll fault-handle-box">
+                                    <div class="table-td table-td-scroll fault-label">处理过程</div>
+                                    <div class="table-td table-td-scroll fault-value">
+                                        {{faultItem.process}}
+                                    </div>
+                                </div>
+                                <div class="table-row fault-handle-box">
+                                    <div class="table-td fault-label">图片</div>
+                                    <div class="table-td fault-value">
+                                        <div class="fault-pic-thumb-box">
+                                            <div class="fault-pic-thumb" 
+                                                v-for="(pic,picIndex) in faultItem.photo">
+                                                <img class="fault-pic center"
+                                                    :src="pic" 
+                                                    @click="showBigPicture(faultItem,picIndex,'history')">
+                                                </img>
+                                            </div>                                            
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 值守历史记录项详情板块 -->
+                <div v-show="content=='watchHistoryItemDetail'" class="content-box">
+                    <div class="content">
+                        <div class="table facility-history-item-detail">
+                            <div class="table-row"
+                                v-for="(facilityHistoryItemDetail,facilityHistoryItemDetailKey) in currentFacilityHistoryItem_computed">
+                                <div class="table-td facility-history-item-detail-name">{{facilityHistoryItemDetailKey}}</div>
+                                <div class="table-td facility-history-item-detail-value">
+                                    {{facilityHistoryItemDetail}}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 设备常规巡检添加备注板块 -->
+                <div v-show="content=='facilityInspectAddRemarks'" class="content-box">
+                    <button class="sure-btn" @click="sureAddFacilityInspectRemarks()">完成</button>
+                    <div class="content">
+                        <div class="facility-inspect-remarks-content">
+                            <textarea class="facility-inspect-remarks-comment" 
+                                        v-model.trim="facilityInspectRemarks.comment_temp"
+                                        placeholder="输入信息">
+                            </textarea>
+                        </div>
+                        <div class="facility-inspect-remarks-content">
+                        </div>
+                    </div>
+                </div>
+                <!-- 设备故障巡检添加故障内容板块 -->
+                <div v-show="content=='facilityInspectAddFaultRecord'" class="content-box">
+                    <button class="sure-btn" @click="sureAddFacilityInspectFaultRecord()">完成</button>
+                    <div class="content">
+                        <div class="facility-inspect-remarks-content">
+                            <textarea class="facility-inspect-remarks-comment" 
+                                        v-model="facilityInspectRemarks.comment_temp"
+                                        placeholder="输入备注信息"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <!-- 设备告警板块 -->
+                <div v-show="content=='facilityAlarm'" class="content-box">
+                    <div class="content active">
+                        <div class="table facility-alarm-content">
+                                <div class="table-row">
+                                    <div class="table-th facility-alarm-item-description">描述</div>
+                                    <div class="table-th facility-alarm-item-type">类型</div>
+                                    <div class="table-th facility-alarm-item-proposal">建议</div>
+                                    <div class="table-th facility-alarm-item-time">时间</div>
+                                </div>
+                                <div>
+                                    <div class="table-row table-row-scroll"
+                                        :class="{serious:alarmItem.level==0,
+                                                 normal:alarmItem.level==1,
+                                                 slight:alarmItem.level==2}"
+                                        v-for="(alarmItem,alarmItemIndex) in currentFacilityAlarm">
+                                        <div class="table-td table-td-scroll facility-alarm-item-description">
+                                            <div class="alarm-level"></div>
+                                            {{alarmItem.description}}
+                                        </div>
+                                        <div class="table-td table-td-scroll facility-alarm-item-type">
+                                            {{alarmItem.code}}
+                                        </div>
+                                        <div class="table-td table-td-scroll facility-alarm-item-proposal">
+                                            {{alarmItem.proposal}}
+                                        </div>
+                                        <div class="table-td table-td-scroll facility-alarm-item-time">
+                                            {{formatTime(alarmItem.alarmTimestamp)}}
+                                        </div>
+                                    </div>
+                                    
+                                </div>
+                                
+                            </div>
+                    </div>
+                </div>
+                
+                <!-- 选择设备面板 -->
+                <div v-show="content=='selectFacility'" class="content-box">
+                    <button class="sure-btn" 
+                        :disabled="taskPublish.selectedFacilityIndex_temp.length==0"
+                        @click="sureSelectFacility()">完成</button>
+                    <div class="content">
+                        <label class="panel select-facility-item" v-for="(selectFacility,selectFacilityIndex) in facilityList">
+                            <div class="select-facility-item-name">{{selectFacility.name}}</div>
+                            <input type="checkbox" 
+                                class="select-facility-input"
+                                :value="selectFacility.domain"
+                                v-model="taskPublish.selectedFacilityIndex_temp">
+                        </label>
+                    </div>
+                </div>
+                <!-- 选择人员面板 -->
+                <div v-show="content=='selectPerformer'" class="content-box">
+                    <button class="sure-btn" 
+                        @click="sureSelectPerformer()">完成</button>
+                    <div class="content">
+                        <label class="panel select-facility-item" 
+                            v-for="(selectPerformer,selectPerformerIndex) in userList_filterByInspectDeviceType">
+                            <div class="select-performer-item-name">{{selectPerformer.name}}</div>
+                            <input type="checkbox" 
+                                class="select-performer-input"
+                                :value="selectPerformer.id"
+                                v-model="taskPublish.selectedPerformerIndex_temp">
+                        </label>
+                    </div>
+                </div>
+                <!-- 我的页面 二级菜单 -->
+                <div v-show="content=='UserManagement'" class="content-box">
+                    <div class="my-panel mymenu-item menuicon-facilityTypeConfig" v-show="userInfo.roleId == 1 || userInfo.roleId == 2"
+                    @click="goToContent('FacilityTypeConfig','配置用户设备类型');getTypeUserList(userHttp)">
+                        配置用户设备类型
+                        <span class="menu-go"></span>
+                    </div>
+                    <div class="my-panel mymenu-item menuicon-facilityGroupConfig" v-show="userInfo.roleId == 1 || userInfo.roleId == 2"
+                    @click="goToContent('deviceConfig','配置设备组');getGroupUserList(userHttp)">
+                        配置用户设备组合
+                        <span class="menu-go"></span>
+                    </div>
+                </div>
+                <div v-show="content=='DeviceManagement'" class="content-box">
+                    <div class="my-panel mymenu-item menuicon-config" v-show="userInfo.roleId == 1 || userInfo.roleId == 2"
+                    @click="goToContent('FacilityTypeManage','巡检设备类型管理');getDeviceTypeList(getDeviceTypeListHttp)">
+                        巡检设备类型管理
+                        <span class="menu-go"></span>
+                    </div>
+                    <div class="my-panel mymenu-item menuicon-groupManagement" v-show="userInfo.roleId == 1 || userInfo.roleId == 2"
+                    @click="goToContent('selectgroup','设备组管理');getDeviceGroup(deviceGroupHttp)">
+                        设备组管理
+                        <span class="menu-go"></span>
+                    </div>
+                </div>
+                <!-- 管理员日志二级菜单 -->
+                <div v-show="content=='LogManagement'" class="content-box">
+                    <div class="my-panel mymenu-item menuicon-logHistory" v-show="userInfo.roleId == 1 || userInfo.roleId == 2"
+                    @click="goToContent('UserList','日志用户列表');getUserList(userHttp)">
+                        历史记录
+                        <span class="menu-go"></span>
+                    </div>
+                    <div class="my-panel mymenu-item menuicon-statCharts" v-show="userInfo.roleId == 1 || userInfo.roleId == 2"
+                    @click="goToContent('statChart','统计图表');">
+                        统计图表
+                        <span class="menu-go"></span>
+                    </div>
+                </div>
+                <!-- 普通用户日志二级菜单 -->
+                <div v-show="content=='myLog'" class="content-box">
+                    <div class="my-panel mymenu-item menuicon-logHistory" v-show="userInfo.roleId == 3"
+                    @click="goToContent('logManage','我的日志历史');getLogList(logHttp,userInfo.userId)">
+                        历史记录
+                        <span class="menu-go"></span>
+                    </div>
+                    <div class="my-panel mymenu-item menuicon-statCharts" v-show="userInfo.roleId == 3"
+                    @click="goToMyChartPage();">
+                        统计图表
+                        <span class="menu-go"></span>
+                    </div>
+                </div>
+                
+
+                <!-- 我的页面 三级菜单 -->
+                <div v-show="content=='statChart'" class="content-box">
+                    <div class="my-panel mymenu-item menuicon-statByUser" v-show="userInfo.roleId == 1 || userInfo.roleId == 2"
+                    @click="goToUserChartPage(getUserChartsHttp)">
+                        按人员统计
+                        <span class="menu-go"></span>
+                    </div>
+                    <div class="my-panel mymenu-item menuicon-statByDevice" v-show="userInfo.roleId == 1 || userInfo.roleId == 2"
+                    @click="goToDeviceChartPage(getDeviceChartsHttp)">
+                        按设备统计
+                        <span class="menu-go"></span>
+                    </div>
+                </div>
+
+                <!-- 人员统计板块 -->
+                <div v-show="content=='UserCharts'" class="content-box">
+                    <button class="sure-btn" @click="getUserChartsData(getUserChartsHttp)">统计</button>
+                    <div class="timeSelectBox">
+                        <div class="timeSelectOpt timeStart">{{defaultTime}}</div>
+                        <div class="timeSelectOpt timeEnd">{{defaultTime}}</div>
+                        <div class="timeSelectOpt byUser">选择用户</div>
+                    </div>
+                    
+                    <div style="overflow-y:auto">
+                        <div class="emptyTip" v-show="TypeisEmpty == true">无数据</div>
+
+                        <div class="chartBox" v-show="TypeisEmpty == false && TypeShowWitch == 'all'">
+                            <div id='allCharts'></div>
+                        </div>
+                        <div class="LegendBox" v-show="TypeisEmpty == false && TypeShowWitch == 'all'">
+                            <ul>
+                                <li class="LegendTitle">
+                                    <span class="textTip" style="left:13px">任务分布</span>
+                                    <span class="textInfo">次数</span>
+                                </li>
+                                <li class="LegendLi" v-for="(allChartsList,allChartsListindex) in allChartsList">
+                                    <span class="colorTip " :class="allChartsList.colorClass"></span>
+                                    <span class="textTip">{{allChartsList.name}}</span>
+                                    <span class="textInfo">{{allChartsList.count}}次</span>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <div class="chartBox" v-show="TypeisEmpty == false && TypeShowWitch == 'single'">
+                            <div id='taskCharts'></div>
+                        </div>
+                        <div class="LegendBox" v-show="TypeisEmpty == false && TypeShowWitch == 'single'">
+                            <ul>
+                                <li class="LegendTitle">
+                                    <span class="textTip" style="left:13px">任务类型分布</span>
+                                    <span class="textInfo">次数</span>
+                                </li>
+                                <li class="LegendLi" v-for="(totalTypeChartsList,totalTypeChartsListindex) in totalTypeChartsList">
+                                    <span class="colorTip " :class="totalTypeChartsList.colorClass"></span>
+                                    <span class="textTip">{{totalTypeChartsList.name}}</span>
+                                    <span class="textInfo">{{totalTypeChartsList.count}}次</span>
+                                </li>
+                            </ul>
+                        </div>
+    
+                        <div class="chartBox" v-show="TypeisEmpty == false && TypeShowWitch == 'single'">
+                            <div id='deviceCharts'></div>
+                        </div>
+                        <div class="LegendBox" v-show="TypeisEmpty == false && TypeShowWitch == 'single'">
+                            <ul>
+                                <li class="LegendTitle">
+                                    <span class="textTip" style="left:13px">任务基站分布</span>
+                                    <span class="textInfo">次数</span>
+                                </li>
+                                <li class="LegendLi" v-for="(totalDeviceChartsList,totalDeviceChartsListindex) in totalDeviceChartsList">
+                                    <span class="colorTip " :class="totalDeviceChartsList.colorClass"></span>
+                                    <span class="textTip">{{totalDeviceChartsList.name}}</span>
+                                    <span class="textInfo">{{totalDeviceChartsList.count}}次</span>
+                                </li>
+                            </ul>
+                        </div>
+    
+                        <div class="chartBox" v-show="TypeisEmpty == false && TypeShowWitch == 'single'">
+                            <div id='detailCharts'></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 设备统计板块 -->
+                <div v-show="content=='DeviceCharts'" class="content-box">
+                    <button class="sure-btn" @click="getDeviceChartsData(getDeviceChartsHttp)">统计</button>
+                    <div class="timeSelectBox">
+                        <div class="timeSelectOpt timeStart2">{{defaultTime}}</div>
+                        <div class="timeSelectOpt timeEnd2">{{defaultTime}}</div>
+                        <div class="timeSelectOpt byDevice">选择设备</div>
+                    </div>
+                    
+                    <div style="overflow-y:auto">
+                        <div class="emptyTip" v-show="DeviceisEmpty == true">无数据</div>
+
+                        <div class="chartBox" v-show="DeviceisEmpty == false && DeviceShowWitch == 'all'">
+                            <div id='allCharts2'></div>
+                        </div>
+                        <div class="LegendBox" v-show="DeviceisEmpty == false && DeviceShowWitch == 'all'">
+                            <ul>
+                                <li class="LegendTitle">
+                                    <span class="textTip" style="left:13px">任务分布</span>
+                                    <span class="textInfo">次数</span>
+                                </li>
+                                <li class="LegendLi" v-for="(allChartsList2,allChartsList2index) in allChartsList2">
+                                    <span class="colorTip " :class="allChartsList2.colorClass"></span>
+                                    <span class="textTip">{{allChartsList2.name}}</span>
+                                    <span class="textInfo">{{allChartsList2.count}}次</span>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <div class="chartBox" v-show="DeviceisEmpty == false && DeviceShowWitch == 'single'">
+                            <div id='taskCharts2'></div>
+                        </div>
+                        <div class="LegendBox" v-show="DeviceisEmpty == false && DeviceShowWitch == 'single'">
+                            <ul>
+                                <li class="LegendTitle">
+                                    <span class="textTip" style="left:13px">任务类型分布</span>
+                                    <span class="textInfo">次数</span>
+                                </li>
+                                <li class="LegendLi" v-for="(totalTypeChartsList2,totalTypeChartsList2index) in totalTypeChartsList2">
+                                    <span class="colorTip " :class="totalTypeChartsList2.colorClass"></span>
+                                    <span class="textTip">{{totalTypeChartsList2.name}}</span>
+                                    <span class="textInfo">{{totalTypeChartsList2.count}}次</span>
+                                </li>
+                            </ul>
+                        </div>
+    
+                        <div class="chartBox" v-show="DeviceisEmpty == false && DeviceShowWitch == 'single'">
+                            <div id='deviceCharts2'></div>
+                        </div>
+                        <div class="LegendBox" v-show="DeviceisEmpty == false && DeviceShowWitch == 'single'">
+                            <ul>
+                                <li class="LegendTitle">
+                                    <span class="textTip" style="left:13px">任务人员分布</span>
+                                    <span class="textInfo">次数</span>
+                                </li>
+                                <li class="LegendLi" v-for="(totalDeviceChartsList2,totalDeviceChartsList2index) in totalDeviceChartsList2">
+                                    <span class="colorTip " :class="totalDeviceChartsList2.colorClass"></span>
+                                    <span class="textTip">{{totalDeviceChartsList2.name}}</span>
+                                    <span class="textInfo">{{totalDeviceChartsList2.count}}次</span>
+                                </li>
+                            </ul>
+                        </div>
+    
+                        <div class="chartBox" v-show="DeviceisEmpty == false && DeviceShowWitch == 'single'">
+                            <div id='detailCharts2'></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 我的统计板块 -->
+                <div v-show="content=='mystatChart'" class="content-box">
+                    <button class="sure-btn" @click="getMyChartsData(getMyChartsHttp)">统计</button>
+                    <div class="timeSelectBox">
+                        <div class="timeSelectOpt timeStart3">{{defaultTime}}</div>
+                        <div class="timeSelectOpt timeEnd3">{{defaultTime}}</div>
+                        <div class="timeSelectOpt myDevice">选择设备</div>
+                    </div>
+                    
+                    <div style="overflow-y:auto">
+                        <div class="emptyTip" v-show="MyisEmpty == true">无数据</div>
+
+                        <div class="chartBox" v-show="MyisEmpty == false && MyShowWitch == 'all'">
+                            <div id='allCharts3'></div>
+                        </div>
+                        <div class="LegendBox" v-show="MyisEmpty == false && MyShowWitch == 'all'">
+                            <ul>
+                                <li class="LegendTitle">
+                                    <span class="textTip" style="left:13px">任务分布</span>
+                                    <span class="textInfo">次数</span>
+                                </li>
+                                <li class="LegendLi" v-for="(allChartsList3,allChartsList3index) in allChartsList3">
+                                    <span class="colorTip " :class="allChartsList3.colorClass"></span>
+                                    <span class="textTip">{{allChartsList3.name}}</span>
+                                    <span class="textInfo">{{allChartsList3.count}}次</span>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <div class="chartBox" v-show="MyisEmpty == false && MyShowWitch == 'single'">
+                            <div id='taskCharts3'></div>
+                        </div>
+                        <div class="LegendBox" v-show="MyisEmpty == false && MyShowWitch == 'single'">
+                            <ul>
+                                <li class="LegendTitle">
+                                    <span class="textTip" style="left:13px">任务类型分布</span>
+                                    <span class="textInfo">次数</span>
+                                </li>
+                                <li class="LegendLi" v-for="(totalTypeChartsList3,totalTypeChartsList3index) in totalTypeChartsList3">
+                                    <span class="colorTip " :class="totalTypeChartsList3.colorClass"></span>
+                                    <span class="textTip">{{totalTypeChartsList3.name}}</span>
+                                    <span class="textInfo">{{totalTypeChartsList3.count}}次</span>
+                                </li>
+                            </ul>
+                        </div>
+    
+                        <div class="chartBox" v-show="MyisEmpty == false && MyShowWitch == 'single'">
+                            <div id='detailCharts3'></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 配置权限版块 -->
+                <div v-show="content=='permissionConfig'" class="content-box table-scroll">
+                    <button class="sure-btn" 
+                    @click="setUserRole(roleHttp)">保存</button>
+                    <div v-show="UserPermission.length==0" class="center">无数据</div>
+                    <div class="table permission-content">
+                        <div class="table-row">
+                            <div class="table-th permission-content-name">用户名</div>
+                            <div class="table-th permission-content-value">用户权限</div>
+                            <div class="table-th permission-content-option">操作</div>
+                        </div>
+                        <div class="table-row" v-for="(UserPermissionItem,UserPermissionIndex) in UserPermission">
+                            <div class="table-td permission-item-name">{{UserPermissionItem.userName||"未知"}}</div>
+                            <div class="table-td permission-item-value">{{UserPermissionItem.roleName||"未知"}}</div>
+                            <div class="table-td permission-item-option">
+                                <div class="switch center"
+                                 :class="{'switch-on':!UserPermissionItem.roleIdBoole,'switch-off':UserPermissionItem.roleIdBoole}">
+                                    <div class="switch-label switch-label-on">普通</div>
+                                    <div class="switch-label switch-label-off">管理</div>
+                                    <div class="switch-btn"></div>
+                                    <input class="switch-input" type="checkbox" v-model="UserPermissionItem.roleIdBoole">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- 密码重置版块 -->
+                <div v-show="content=='resetPsd'" class="content-box table-scroll">
+                    <div v-show="ResetPsdUserList.length==0" class="center">无数据</div>
+                    <div class="table resetPsd-content">
+                        <div class="table-row">
+                            <div class="table-th resetPsd-content-name">用户名</div>
+                            <div class="table-th resetPsd-content-option">操作</div>
+                        </div>
+                        <div class="table-row" v-for="(ResetPsdUserList,UserResetPsdIndex) in ResetPsdUserList">
+                            <div class="table-td resetPsd-item-name">{{ResetPsdUserList.userName||"未知"}}</div>
+                            <div class="table-td resetPsd-item-option" style="color:rgb(28,134,238)"
+                            @click="resetUserPsd(resetUserPsdHttp,ResetPsdUserList.id,ResetPsdUserList.userName)">重置密码</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 配置巡检设备类型板块 -->
+                <div v-show="content=='FacilityTypeConfig'" class="content-box table-scroll">
+                    <div class="table device-content">
+                        <div class="table-row">
+                            <div class="table-th device-content-name">用户名</div>
+                            <div class="table-th device-content-value">设备类型</div>
+                            <div class="table-th device-content-option">配置</div>
+                        </div>
+                        <div class="table-row" v-for="(UserFacilityType,UserFacilityTypeIndex) in UserFacilityType">
+                            <div class="table-td device-item-name">{{UserFacilityType.userName || "未知"}}</div>
+                            <div class="table-td device-item-value">{{UserFacilityType.inspectTypeName || "无"}}</div>
+                            <div class="table-td device-item-option" style="color: #1C86EE"
+                            @click="goToContent('changeType',UserFacilityType.userName);getUserDeviceType(deviceTypeHttp,UserFacilityType.id,UserFacilityType.inspectDeviceTypeList)">配置</div>
+                        </div>
+                    </div>
+                </div>
+                <!-- 配置巡检设备类型详情板块 -->
+                <div v-show="content=='changeType'" class="content-box">
+                    <button class="sure-btn" 
+                    @click="setUserDeviceType(setDeviceTypeHttp,UserFacilityType.id)">保存</button>
+                    <div class="content">
+                        <div class="deviceadd-list">
+                            <div class="deviceadd-item-list">选择设备类型</div>
+                            <div class="deviceadd-list-box">
+                                <div v-show="ModifyFacilityTypeList.length==0 || ModifyFacilityTypeList == '无数据'" class="center">无数据</div>
+                                <div class="content-box">
+                                    <div class="content">
+                                        <label class="panel-select select-facility-item" v-for="(ModifyFacilityTypeList,ModifyFacilityTypeListIndex) in ModifyFacilityTypeList">
+                                            <div class="select-facility-item-name">{{ModifyFacilityTypeList.name}}</div>
+                                            <input type="checkbox" 
+                                                class="select-facility-input"
+                                                :value="ModifyFacilityTypeList.id"
+                                                v-model="setUserFacilityType.setUserFacilityType_temp">
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- 巡检设备类型管理板块 -->
+                <div v-show="content=='FacilityTypeManage'" class="content-box table-scroll">
+                    <div class="table device-content">
+                        <div class="table-row">
+                            <div class="table-th device-content-name-4">类型名称</div>
+                            <div class="table-th device-content-value-4">巡检项目</div>
+                            <div class="table-th device-content-value-4">子模块</div>
+                            <div class="table-th device-content-option-4">操作</div>
+                        </div>
+                        <div class="table-row" v-for="(FacilityTypeLists,FacilityTypeListsIndex) in FacilityTypeLists">
+                            <div class="table-td device-item-name-4">{{FacilityTypeLists.name || "无"}}</div>
+                            <div class="table-td device-item-value-4"
+                            @click="goToContent('FacilityTypeMenuManage',FacilityTypeLists.name);getTypeMenuList(getTypeMenuListHttp,FacilityTypeLists.id)">
+                                {{FacilityTypeLists.menuName || "无"}}
+                            </div>
+                            <div class="table-td device-item-value-4"
+                            @click="goToContent('FacilityTypeModuleManage',FacilityTypeLists.name);getTypeModuleList(getTypeModuleListHttp,FacilityTypeLists.id)">
+                                {{FacilityTypeLists.moduleName || "无"}}
+                            </div>
+                            <div class="table-td device-item-option-4" style="color: #1C86EE"
+                            @click="deleteFacilityType(delFacilityTypeHttp,FacilityTypeLists.id)">删除</div>
+                        </div>
+                        <div class="table-row">
+                            <div class="table-td device-item-name-4">
+                                <input type="text" placeholder="类型名称" class="FacilityType-input" v-model="AddFacilityTypeName"/>
+                            </div>
+                            <div class="table-td device-item-value-4 disabled">请配置</div>
+                            <div class="table-td device-item-value-4 disabled">请配置</div>
+                            <div class="table-td device-item-option-4" style="color: #1C86EE"
+                            @click="addFacilityType(addFacilityTypeHttp)">新加</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 巡检设备类型下巡检目录管理板块 -->
+                <div v-show="content=='FacilityTypeMenuManage'" class="content-box table-scroll">
+                    <div class="table device-content">
+                        <div class="table-row">
+                            <div class="table-th device-content-name">项目名称</div>
+                            <div class="table-th device-content-value">描述</div>
+                            <div class="table-th device-content-option">操作</div>
+                        </div>
+                        <div class="table-row" v-for="(FacilityTypeMenuLists,FacilityTypeMenuListsIndex) in FacilityTypeMenuLists">
+                            <div class="table-td device-item-name">{{FacilityTypeMenuLists.name || "无"}}</div>
+                            <div class="table-td device-item-value">{{FacilityTypeMenuLists.description || "无"}}</div>
+                            <div class="table-td device-item-option" style="color: #1C86EE"
+                            @click="deleteFacilityTypeMenu(delFacilityTypeMenuHttp,FacilityTypeMenuLists.id,FacilityTypeMenuListsParentId)">删除</div>
+                        </div>
+                        <div class="table-row">
+                            <div class="table-td device-item-name">
+                                <input type="text" placeholder="项目名称" class="FacilityType-input" v-model="AddFacilityTypeMenuName"/>
+                            </div>
+                            <div class="table-td device-item-value">
+                                <input type="text" placeholder="项目描述" class="FacilityType-input" v-model="AddFacilityTypeMenuDes"/>
+                            </div>
+                            <div class="table-td device-item-option" style="color: #1C86EE"
+                            @click="addFacilityTypeMenu(addFacilityTypeMenuHttp,FacilityTypeMenuListsParentId)">新加</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 巡检设备类型下子模块管理板块 -->
+                <div v-show="content=='FacilityTypeModuleManage'" class="content-box table-scroll">
+                    <div class="table device-content">
+                        <div class="table-row">
+                            <div class="table-th device-content-name">模块名称</div>
+                            <div class="table-th device-content-value">描述</div>
+                            <div class="table-th device-content-option">操作</div>
+                        </div>
+                        <div class="table-row" v-for="(FacilityTypeModuleLists,FacilityTypeModuleListsIndex) in FacilityTypeModuleLists">
+                            <div class="table-td device-item-name">{{FacilityTypeModuleLists.name || "无"}}</div>
+                            <div class="table-td device-item-value">{{FacilityTypeModuleLists.description || "无"}}</div>
+                            <div class="table-td device-item-option" style="color: #1C86EE"
+                            @click="deleteFacilityTypeModule(delFacilityTypeModuleHttp,FacilityTypeModuleLists.id,FacilityTypeModuleListsParentId)">删除</div>
+                        </div>
+                        <div class="table-row">
+                            <div class="table-td device-item-name">
+                                <input type="text" placeholder="模块名称" class="FacilityType-input" v-model="AddFacilityTypeModuleName"/>
+                            </div>
+                            <div class="table-td device-item-value">
+                                <input type="text" placeholder="模块描述" class="FacilityType-input" v-model="AddFacilityTypeModuleDes"/>
+                            </div>
+                            <div class="table-td device-item-option" style="color: #1C86EE"
+                            @click="addFacilityTypeModule(addFacilityTypeModuleHttp,FacilityTypeModuleListsParentId)">新加</div>
+                        </div>
+                    </div>
+                </div>
+
+
+                <!-- 配置设备组板块 -->
+                <div v-show="content=='deviceConfig'" class="content-box table-scroll">
+                    <div class="table device-content">
+                        <div class="table-row">
+                            <div class="table-th device-content-name">用户名</div>
+                            <div class="table-th device-content-value">设备组</div>
+                            <div class="table-th device-content-option">操作</div>
+                        </div>
+                        <div class="table-row" v-for="(userfacilitygroup,userfacilitygroupIndex) in UserFacilityGroup">
+                            <div class="table-td device-item-name">{{userfacilitygroup.userName || "未知"}}</div>
+                            <div class="table-td device-item-value">{{userfacilitygroup.facilityGroupName || "未知"}}</div>
+                            <div class="table-td device-item-option" style="color: #1C86EE"
+                            @click="goToContent('changegroup','更换设备组');getSelectDeviceGroup(deviceGroupHttp,userfacilitygroup.id)">更换</div>
+                        </div>
+                    </div>
+                </div>
+                <!-- 设备组更换板块 -->
+                <div v-show="content=='changegroup'" class="content-box">
+                    <div class="content">
+                        <div v-show="changeFacilityList.length == 0" class="center">无数据</div>
+                        <div class="panel changegroup-item" v-for="(changeFacilityList,changeFacilityListIndex) in changeFacilityList" @click="">
+                            <div class="changegroup-name">
+                                {{changeFacilityList.name || "未知"}}
+                            </div>
+                            <div class="changegroup-detail">
+                                <div class="changegroup-description-tip">包含基站：</div>
+                                <div class="changegroup-description" v-for="facilityName in changeFacilityList.facilityList">
+                                    {{facilityName.name || "未知"}},
+                                </div>
+                            </div>
+                            <div class="changegroup-accept">
+                                <div class="changegroup-accept-icon"></div>
+                                <div class="changegroup-accept-label" 
+                                @click="setUserDeviceGroup(setDeviceGroupHttp,changeFacilityList.id)">选择</div>
+                            </div>
+                        </div>                    
+                    </div>
+                </div>
+                <!-- 设备组详情板块 -->
+                <div v-show="content=='selectgroup'" class="content-box table-scroll">
+                    <div class="table devicegroup-content">
+                        <div class="table-row">
+                            <div class="table-th devicegroup-content-name">设备组名</div>
+                            <div class="table-th devicegroup-content-value">修改</div>
+                            <div class="table-th devicegroup-content-option">删除</div>
+                        </div>
+                        <div class="table-row" v-for="devicegroupItem in deviceGroup">
+                            <div class="table-td devicegroup-item-name"
+                            @click="goToContent('FacilityGroupDetails',devicegroupItem.name);showGroupDetail(devicegroupItem.facilityList)">
+                                {{devicegroupItem.name||"未知"}}
+                            </div>
+                            <div class="table-td devicegroup-item-value" 
+                            @click="showCurrentList(deviceHttp,devicegroupItem.name,devicegroupItem.id,devicegroupItem.facilityList)">
+                                修改
+                            </div>
+                            <div class="table-td devicegroup-item-option"
+                            @click="delFacilityGroup(delDeviceGroupHttp,devicegroupItem.id)">
+                                删除
+                            </div>
+                        </div>
+                    </div>
+                    <div class="devicegroup-op">
+                        <div class="devicegroup-op-btn-box">
+                            <div class="devicegroup-op-btn" @click="goToContent('adddevicegroup','添加设备组');getDevice(deviceHttp)">
+                                添加设备组
+                            </div>
+                        </div>
+                        <!-- <div class="devicegroup-op-btn-box1">
+                            <div class="devicegroup-op-btn1">
+                                删除设备组
+                            </div>
+                        </div> -->
+                    </div>
+                </div>
+                <!-- 设备组包含设备详情板块 -->
+                <div v-show="content=='FacilityGroupDetails'" class="content-box">
+                    <div v-show="deviceGroupDetails.length==0" class="center">无基站</div>
+                    <div class="panel Details-item" v-for="(deviceGroupDetails,deviceGroupDetailsIndex) in deviceGroupDetails">
+                        <div class="Details-name">
+                            {{deviceGroupDetails.name || "未知"}}
+                        </div>
+                        <div class="Details-detail">
+                            <div class="Details-description-tip">设备域名：</div>
+                            <div class="Details-description">
+                                {{deviceGroupDetails.domain || "未知"}}
+                            </div>
+                        </div>
+                        <div class="Details-detail">
+                            <div class="Details-release-tip">设备IP：</div>
+                            <div class="Details-release-time">
+                                {{deviceGroupDetails.ip || "未知"}}
+                            </div>
+                        </div>
+                    </div>                    
+                </div>
+                <!-- 添加设备组板块 -->
+                <div v-show="content=='adddevicegroup'" class="content-box">
+                    <button class="sure-btn" 
+                    @click="saveFacilityGroup(setDeviceHttp)">保存</button>
+                    <div class="content">
+                        <div class="deviceadd-content">
+                            <div class="deviceadd-item-name">设备组名</div>
+                            <div class="deviceadd-item-input">
+                                <input type="text" v-model="FacilityGroupName"/>
+                            </div>
+                        </div>
+                        <div class="black-content"></div>
+                        <div class="deviceadd-list">
+                            <div class="deviceadd-item-list">选择设备</div>
+                            <div class="deviceadd-list-box">
+                                <!-- 选择设备面板 -->
+                                <div v-show="FacilityList.length==0" class="center">无数据</div>
+                                <div class="content-box">
+                                    <div class="content">
+                                        <label class="panel-select select-facility-item" v-for="(Facilitylist,FacilitylistIndex) in FacilityList">
+                                            <div class="select-facility-item-name">{{Facilitylist.name}}</div>
+                                            <input type="checkbox" 
+                                                class="select-facility-input"
+                                                :value="Facilitylist.domain"
+                                                v-model="saveFacility.saveFacilityDomain_temp">
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 修改设备组板块 -->
+                <div v-show="content=='modifydevicegroup'" class="content-box">
+                    <button class="sure-btn" 
+                    @click="modifyFacilityGroup(setDeviceHttp,ModifyFacilityList.id)">保存</button>
+                    <div class="content">
+                        <div class="deviceadd-content">
+                            <div class="deviceadd-item-name">设备组名</div>
+                            <div class="deviceadd-item-input">
+                                <input type="text" v-model="ModifyFacilityGroupName"/>
+                            </div>
+                        </div>
+                        <div class="black-content"></div>
+                        <div class="deviceadd-list">
+                            <div class="deviceadd-item-list">选择设备</div>
+                            <div class="deviceadd-list-box">
+                                <!-- 选择设备面板 -->
+                                <div v-show="FacilityList.length==0" class="center">无数据</div>
+                                <div class="content-box">
+                                    <div class="content">
+                                        <label class="panel-select select-facility-item" v-for="(ModifyFacilityList,ModifyFacilityListIndex) in ModifyFacilityList">
+                                            <div class="select-facility-item-name">{{ModifyFacilityList.name}}</div>
+                                            <input type="checkbox" 
+                                                class="select-facility-input"
+                                                :value="ModifyFacilityList.domain"
+                                                v-model="setFacility.setFacilityDomain_temp">
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 获取下级用户列表 -->
+                <div v-show="content=='UserList'" class="content-box">
+                    <div class="content">
+                        <div v-show="UserList.length==0" class="center">无数据</div>
+                        <div class="panel user-item" v-for="(User,userIndex) in UserList" 
+                        @click="goToContent('logManage',User.name);getLogList(logHttp,User.id)">
+                            <div class="user-name">
+                                {{User.name||"未知"}}
+                            </div>
+                            <div class="user-detail">
+                                <div class="user-description-tip">用户级别：</div>
+                                <div class="user-description">
+                                    {{User.role.name||"未知"}}
+                                </div>
+                            </div>
+                            <div class="user-accept">
+                                <div class="user-accept-icon"></div>
+                                <div class="user-accept-label">日志</div>
+                            </div>
+                        </div>                    
+                    </div>
+                </div>
+
+                <!-- 日志板块 -->
+                <div v-show="content=='logManage'" class="content-box has-filter-box">
+                    <!-- 日志过滤 -->
+                    <div class="filter-box">                  
+                        <div class="filter">
+                            <div class="filter-item" :class="{active:logFilter=='history'}" @click="logFilter='history'">
+                                记录
+                            </div>
+                            <div class="filter-item" :class="{active:logFilter=='gather'}" @click="logFilter='gather'">
+                                汇总
+                            </div>
+                        </div>
+                    </div>
+                    <!-- 日志列表 -->
+                    <div class="content" v-show="logFilter=='history'">
+                        <button class="sure-btn">
+                            <a :href="exportByUserHttp + '?userId=' + currentExportUserId + '&year=&month=' " target="_blank">导出</a>
+                        </button>
+                        <div class="table facility-content">
+                            <div class="table-row">
+                                <div class="table-th facility-history-item-name">项目</div>
+                                <div class="table-th facility-history-item-time">时间</div>
+                                <div class="table-th facility-history-item-handler">设备</div>
+                            </div>
+                            <div v-show="logList.length==0" class="table-row">
+                                <div class="table-td">无数据</div>
+                            </div>
+                            <div class="table-row"
+                                v-for="(log,logIndex) in logList"
+                                @click="goToFacilityHistoryItem(log,log.inspectType)"
+                                style="overflow:hidden">
+                                <div class="table-td facility-history-item-name">{{ historyItemInspectType(log) }}</div>
+                                <div class="table-td facility-history-item-time">{{log.endTime}}</div>
+                                <div class="table-td facility-history-item-handler">{{log.facility.name}}</div>
+                            </div>
+                        </div>              
+                    </div>
+                    <!-- 日志汇总 -->
+                    <div class="content" v-show="logFilter=='gather'">
+                        <div class="table loggather-content">
+                            <div class="table-row">
+                                <div class="table-td loggather-content-name">执行人</div>
+                                <div class="table-td loggather-content-value">{{logGather.inspectName}}</div>
+                            </div>
+                            <div class="table-row">
+                                <div class="table-td loggather-content-name">参与任务次数</div>
+                                <div class="table-td loggather-content-value">{{logGather.partakeTask}}</div>
+                            </div>
+                            <div class="table-row">
+                                <div class="table-td loggather-content-name">接受任务次数</div>
+                                <div class="table-td loggather-content-value">{{logGather.acceptTask}}</div>
+                            </div>
+                            <div class="table-row">
+                                <div class="table-td loggather-content-name">自主任务次数</div>
+                                <div class="table-td loggather-content-value">{{logGather.autoTask}}</div>
+                            </div>
+                            <div class="table-row">
+                                <div class="table-td loggather-content-name">值守次数</div>
+                                <div class="table-td loggather-content-value">{{logGather.watch}}</div>
+                            </div>
+                            <div class="table-row">
+                                <div class="table-td loggather-content-name">平均完成时间</div>
+                                <div class="table-td loggather-content-value">{{logGather.completeTime}}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 用户信息板块 -->
+                <div v-show="content=='userMessage'" class="content-box">
+                    <div class="content">
+                        <div class="table loggather-content">
+                            <div class="table-row">
+                                <div class="table-td loggather-content-name">登录名</div>
+                                <div class="table-td loggather-content-value">{{user.loginName}}</div>
+                            </div>
+                            <div class="table-row">
+                                <div class="table-td loggather-content-name">姓名</div>
+                                <div class="table-td loggather-content-value">{{user.userName}}</div>
+                            </div>
+                            <div class="table-row">
+                                <div class="table-td loggather-content-name">登录时间</div>
+                                <div class="table-td loggather-content-value">{{user.loginDate}}</div>
+                            </div>
+                            <div class="table-row">
+                                <div class="table-td loggather-content-name">用户角色</div>
+                                <div class="table-td loggather-content-value">{{user.roleName}}</div>
+                            </div>
+                            <div class="table-row">
+                                <div class="table-td loggather-content-name">电话</div>
+                                <div class="table-td loggather-content-value">{{user.phone}}</div>
+                            </div>
+                            <div class="my-panel myexit-item" @click="goToContent('modifyPassword','修改密码')">
+                                修改密码
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 修改密码 板块 -->
+                <div v-show="content=='modifyPassword'" class="content-box">
+                    <div class="content">
+                        <div class="password-content">
+                            <div class="password-item-name">旧密码</div>
+                            <div class="password-item-input">
+                                <input type="password" v-model="passwordModel.oldPassword"/>
+                            </div>
+                        </div>
+                        <div class="password-content">
+                            <div class="password-item-name">新密码</div>
+                            <div class="password-item-input">
+                                <input type="password" v-model="passwordModel.newPassword"/>
+                            </div>
+                        </div>
+                        <div class="password-content">
+                            <div class="password-item-name">确认新密码</div>
+                            <div class="password-item-input">
+                                <input type="password" v-model="passwordModel.confirmPassword"/>
+                            </div>
+                        </div>
+                        <div class="my-panel myexit-item" @click="modifyPsd(modifyPsdHttp)">
+                            确认修改
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 我的页面 关于软件 -->
+                <div v-show="content=='about'" class="content-box" style="background-color:rgba(200, 199, 203,0.2)">
+                    <div class="my-panel mymenu-item-pic">
+                        
+                        <p class="version">Version {{appVersion}}</p>
+                        <!-- <p class="versionTime">Build 2017-12-27</p> -->
+                    </div>
+                    <div class="my-panel mymenu-item-about">软件介绍<span class="menu-go"></span></div>
+                    <div class="my-panel mymenu-item-about">团队介绍<span class="menu-go"></span></div>
+                    <div class="my-panel mymenu-item-about">版本更新<span class="menu-go"></span></div>
+                    <div class="my-panel mymenu-item-copyright">
+                        Copyright @ 2017 Base Station Inspect System - Powered By HAIGE HIGHTONE V{{appVersion}}
+                    </div>
+                </div>
+            </div>
+
+            <div v-show="showLoading == true" class="content-loading">
+                <div class="sxu-useable-waiting"></div>
+            </div>
+        </div>
+
+        
+
+        
+        <script type="text/javascript" src="cordova.js"></script>
+        <script type="text/javascript" src="./js/vue.js"></script>
+        <script type="text/javascript" src="element-ui/element-ui.js"></script>
+        <script type="text/javascript" src="./js/minirefresh/minirefresh.min.js"></script>
+        <script type="text/javascript" src="./js/charfirst.pinyin.js"></script>
+        <script type="text/javascript" src="./js/deviceready.js"></script>
+        <script type="text/javascript" src="mobile-selector-master/js/jquery.selector-px.js"></script>
+        <script type="text/javascript" src="mobile-selector-master/js/zepto.js"></script>
+        <script type="text/javascript" src="./js/index.js"></script>
+    </body>
+</html>

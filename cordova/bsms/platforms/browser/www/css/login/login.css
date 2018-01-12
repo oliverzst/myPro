@@ -1,0 +1,193 @@
+* {
+    -webkit-tap-highlight-color: rgba(0,0,0,0); /* make transparent link selection, adjust last value opacity 0 to 1.0 */
+}
+a,a:hover {
+    text-decoration: none;
+}
+
+html,body {
+    height:100%;
+    margin:0px;
+    padding:0px;
+    width:100%;
+    overflow-y: hidden;
+}
+:-moz-placeholder { /* Mozilla Firefox 4 to 18 */
+    color: #6c778d; opacity:1; 
+}
+::-moz-placeholder { /* Mozilla Firefox 19+ */
+    color: #6c778d;opacity:1;
+}
+input:-ms-input-placeholder{
+    color: #6c778d;opacity:1;
+}
+input::-webkit-input-placeholder{
+    color: #6c778d;opacity:1;
+}
+/*====主体背景====*/
+#login {
+    width:100%;
+    height:100%;
+    background-color:rgb(47, 65, 89);
+    position: relative;
+    overflow-y:auto;
+}
+/*====加载页面====*/
+#loadingBox {
+    width: 100%;
+    height: 100%;
+    background:url(../../img/login/bj.png) no-repeat 0 0;
+    background-size: 100% 100%;
+    position: absolute;
+}
+#LoadingLogo {
+    width: 198px;
+    height: 198px;
+    background:url(../../img/login/loadingLogo.png) no-repeat 0 0;
+    background-size: 100% 100%;
+    margin: 54% auto 0;
+}
+#LoadingText {
+    width: 177px;
+    height: 27px;
+    background:url(../../img/login/logo2.png) no-repeat 0 0;
+    background-size: 100% 100%;
+    margin: 5% auto;
+}
+/*====登录页面====*/
+#loginBox {
+    width: 76%;
+    height: 90%;
+    margin: 0 12%;
+    position: absolute;
+    top: 5%; 
+}
+#LogoImg {
+    width: 54px;
+    height: 63px;
+    background:url(../../img/login/LOGO.png) no-repeat 0 0;
+    background-size: contain;
+    margin: 5% auto;
+}
+#LogoText {
+    width: 96px;
+    height: 47px;
+    background:url(../../img/login/loginzh.png) no-repeat 0 0;
+    background-size: contain;
+    margin: 8% auto;
+}
+#loginBox p {
+    color: #FF4040;
+    padding: 0 0 0 20%;
+}
+#loginBox > form {
+    width: 100%;
+    height: auto;
+    margin-top: 5%;
+}
+#loginBox input[type='text'],#loginBox input[type='password'] {
+    width: 69%;
+    height: 40px;
+    font-size: 18px;
+    padding: 0 10% 0 20%;
+    margin: 14px 0;
+    background-color: rgb(31,48,69);
+    border: 1px solid rgb(96,154,228);
+    border-radius: 5px;
+    color: #6c778d;
+}
+input#userName {
+    background-image: url("../../img/login/Username.png");
+    background-position: 7% 9px;
+    background-repeat: no-repeat;
+}
+input#password {
+    background-image: url("../../img/login/cipher.png");
+    background-position: 7% 9px;
+    background-repeat: no-repeat;
+}
+input#ipadress {
+    background-image: url("../../img/login/computer.png");
+    background-position: 7% 12px;
+    background-repeat: no-repeat;
+}
+#loginBox input[type='button'] {
+    display: block;
+    width: 99%;
+    height: 44px;
+    color: #fff;
+    font-size: 20px;
+    background-color:rgb(4,180,180) ;
+    border-radius:5px; 
+    margin-top: 10%;
+}
+#loginBox a#forgetPsd {
+    display: inline-block;
+    width: 70%;
+    height: 30px;
+    line-height: 30px;
+    font-size: 14px;
+    color: #6c778d;
+    text-align: center;
+    margin: 2% 15% 0;
+    font-weight: bolder;
+}
+#loginBox a#userRegister {
+    display: inline-block;
+    width: 70%;
+    height: 30px;
+    line-height: 30px;
+    font-size: 14px;
+    color: #6c778d;
+    text-align: center;
+    margin: 5% 15% 0;
+    font-weight: bolder;
+}
+/*====注册页面====*/
+#registerBox {
+    width: 76%;
+    height: 90%;
+    margin: 0 12%;
+    position: absolute;
+    top: 10%; 
+}
+#registerBox p {
+    color: #FF4040;
+    padding: 0 0 0 20%;
+}
+#registerBox > form {
+    width: 100%;
+    height: auto;
+}
+#registerBox input[type='text'],#registerBox input[type='password'] {
+    width: 96%;
+    height: 36px;
+    font-size: 18px;
+    border: none;
+    background: none;
+    border-bottom: 1px solid #435a7a;
+    padding: 0 2%;
+    margin: 10px 0;
+    color: #6c778d;
+}
+#registerBox input[type='button'] {
+    display: block;
+    background-color: rgb(4,180,180);
+    width: 100%;
+    border-radius:5px;
+    margin-top: 15%;
+    height: 44px;
+    color: #fff;
+    font-size: 18px;
+}
+#registerBox a {
+    display: inline-block;
+    width: 70%;
+    height: 30px;
+    line-height: 30px;
+    font-size: 14px;
+    color: #6c778d;
+    text-align: center;
+    margin: 10% 15% 0;
+    font-weight: bolder;
+}

@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.actec.bsms.repository.dao.RoleDao">
+	
+    <sql id="roleColumns">
+    	a.id,
+    	a.name,
+    	a.role_type AS roleType,
+		a.data_scope AS dataScope,
+		a.remarks,
+		a.create_by AS "createBy.id",
+		a.create_date,
+		a.update_by AS "updateBy.id",
+		a.update_date,
+		a.del_flag,
+    	a.useable AS useable,
+    </sql>
+    
+	<select id="get" resultType="com.actec.bsms.entity.Role">
+		SELECT
+			<include refid="roleColumns"/>,
+		FROM sys_role a
+		WHERE a.id = #{id}
+	</select>
+
+
+	
+	<select id="findList" resultType="com.actec.bsms.entity.Role">
+		SELECT <!-- DISTINCT -->
+			<include refid="roleColumns"/>
+		FROM sys_role a
+		LEFT JOIN sys_user_role ur ON ur.role_id = a.id
+		LEFT JOIN sys_user u ON u.id = ur.user_id AND u.del_flag = 0
+		WHERE a.del_flag = #{DEL_FLAG_NORMAL} AND a.useable=#{useable}
+		<if test="user != null and user.id != null and user.id != ''">
+			AND u.id = #{user.id}
+		</if>
+		<if test="user != null and user.loginName != null and user.loginName != ''">
+			AND u.login_name = #{user.loginName}
+		</if>
+		ORDER BY a.name
+	</select>
+	
+	<select id="findAllList" resultType="com.actec.bsms.entity.Role">
+		SELECT
+			<include refid="roleColumns"/>
+		FROM sys_role a
+		WHERE a.del_flag = #{DEL_FLAG_NORMAL}
+		ORDER BY a.name
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO sys_role(
+			id,
+			name,
+			role_type, 
+			data_scope, 
+			create_by, 
+			create_date, 
+			update_by, 
+			update_date, 
+			remarks, 
+			del_flag,
+			useable
+		) VALUES (
+			#{id},
+			#{name},
+			#{roleType}, 
+			#{dataScope}, 
+			#{createBy.id}, 
+			#{createDate}, 
+			#{updateBy.id}, 
+			#{updateDate}, 
+			#{remarks}, 
+			#{delFlag},
+			#{useable}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE sys_role SET
+			name = #{name},
+			role_type = #{roleType}, 
+			data_scope = #{dataScope}, 
+			update_by = #{updateBy.id}, 
+			update_date = #{updateDate}, 
+			remarks = #{remarks},
+			useable = #{useable}
+		WHERE id = #{id}
+	</update>
+
+	<update id="delete">
+		UPDATE sys_role SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+
+	<!-- 创建权限表 -->
+	<update id="createTable">
+		<![CDATA[
+		CREATE TABLE IF NOT EXISTS sys_role (
+		  id int AUTO_INCREMENT COMMENT '编号',
+		  name varchar(100) NOT NULL COMMENT '名称',
+		  role_type varchar(255) DEFAULT NULL COMMENT '类型',
+		  data_scope char(1) DEFAULT NULL COMMENT '数据域',
+		  create_date datetime NOT NULL COMMENT '创建时间',
+		  update_date datetime NOT NULL COMMENT '更新时间',
+		  remarks varchar(255) DEFAULT NULL COMMENT '备注信息',
+		  del_flag char(1) NOT NULL DEFAULT '0' COMMENT '删除标记',
+		  PRIMARY KEY (`id`)
+		) COMMENT='权限表';
+		]]>
+	</update>
+
+	<!-- 初始化数据 -->
+	<update id="initTable">
+		INSERT INTO `sys_role` VALUES (1, '超级管理员', '2', '1', now(), now(), null, '0');
+	</update>
+
+	<update id="initTable1">
+		INSERT INTO `sys_role` VALUES (2, '管理员', '2', '1', now(), now(), null, '0');
+	</update>
+
+	<update id="initTable2">
+		INSERT INTO `sys_role` VALUES (3, '工程人员', '2', '1', now(), now(), null, '0');
+	</update>
+	
+</mapper>

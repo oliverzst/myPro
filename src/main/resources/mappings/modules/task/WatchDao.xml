@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.actec.bsms.repository.dao.WatchDao">
+
+	<resultMap id="WatchResult" type="com.actec.bsms.entity.Watch">
+		<id property="id" column="id" />
+		<result property="state" column="state" />
+		<result property="watchTime" column="watch_time" />
+		<result property="watchBy" column="watch_by" />
+		<result property="watchRecords" column="watch_records" />
+		<result property="endTime" column="end_time" />
+        <result property="taskId" column="task_id" />
+		<collection property="task" ofType="com.actec.bsms.entity.Task">
+            <id property="id" column="task.id" />
+			<result property="taskName" column="task.taskName" />
+		</collection>
+		<collection property="watchUser" ofType="com.actec.bsms.entity.User">
+            <id property="id" column="watchUser.id" />
+			<result property="name" column="watchUser.name" />
+		</collection>
+		<collection property="facility" ofType="com.actec.bsms.entity.Facility">
+			<result property="name" column="facility.name" />
+		</collection>
+	</resultMap>
+
+    <sql id="watchColumns">
+    	a.id,
+		a.state,
+		a.watch_time,
+		a.watch_by,
+		a.watch_records,
+		a.end_time,
+		a.task_id,
+		t.id AS "task.id",
+        t.task_name AS "task.taskName",
+        u.id AS "watchUser.id",
+        u.name AS "watchUser.name",
+		f.name AS "facility.name"
+    </sql>
+
+    <sql id="watchJoins">
+		LEFT JOIN task t ON t.id = a.task_id
+        LEFT JOIN sys_user u ON u.id = a.watch_by
+        LEFT JOIN facility f ON f.domain = t.facility_domain
+    </sql>
+
+	<select id="get" resultMap="WatchResult">
+		SELECT
+			<include refid="watchColumns"/>
+		FROM watch a
+			<include refid="watchJoins"/>
+		WHERE a.id = #{id}
+	</select>
+
+	<select id="findAllList" resultMap="WatchResult">
+		SELECT
+			<include refid="watchColumns"/>
+		FROM watch a
+		<include refid="watchJoins"/>
+	</select>
+
+	<select id="findByTaskId" resultMap="WatchResult">
+		SELECT
+		<include refid="watchColumns"/>
+		FROM watch a
+		<include refid="watchJoins"/>
+		WHERE a.task_id = #{taskId}
+	</select>
+
+	<select id="findHistoryByUserId" resultMap="WatchResult">
+		SELECT
+		<include refid="watchColumns"/>
+		FROM watch a
+		<include refid="watchJoins"/>
+		WHERE a.state = 1
+        <if test="userId != 0">
+            AND a.watch_by = #{userId}
+        </if>
+	</select>
+
+	<select id="findHistoryByUserIdAndMonth" resultMap="WatchResult">
+		SELECT
+		<include refid="watchColumns"/>
+		FROM watch_#{year}_#{month} a
+		<include refid="watchJoins"/>
+		WHERE a.state = 1
+        <if test="userId != 0">
+            AND a.watch_by = #{userId}
+        </if>
+	</select>
+
+	<insert id="insert">
+		INSERT INTO watch(
+			id,
+			state,
+			watch_time,
+			watch_by,
+			watch_records,
+			end_time,
+			task_id
+		) VALUES (
+			#{id},
+			#{state},
+			#{watchTime},
+			#{watchBy},
+			#{watchRecords},
+			#{endTime},
+			#{taskId}
+		)
+	</insert>
+
+	<update id="update">
+		UPDATE watch SET
+			state = #{state},
+			watch_records = #{watchRecords},
+			end_time = #{endTime}
+		WHERE id = #{id}
+	</update>
+
+	<delete id="delete">
+		DELETE FROM watch WHERE id = #{id}
+	</delete>
+
+	<update id="createTable">
+		<![CDATA[
+		CREATE TABLE IF NOT EXISTS watch (
+		  id int AUTO_INCREMENT COMMENT '编号',
+		  watch_time datetime NOT NULL COMMENT '值守开始时间',
+		  watch_by int COMMENT '值守人',
+		  watch_records varchar(20000) DEFAULT NULL COMMENT '巡检记录',
+		  state int COMMENT '值守状态',
+		  end_time datetime DEFAULT NULL COMMENT '值守完成时间',
+		  task_id int COMMENT '值守任务id',
+		  PRIMARY KEY (`id`)
+		) COMMENT='值守表';
+		]]>
+	</update>
+
+	<update id="createMonthTable">
+		RENAME TABLE watch TO watch_#{year}_#{month};
+	</update>
+
+	<update id="updateInspectTable">
+		INSERT INTO watch SELECT * FROM watch_#{year}_#{month} WHERE end_time is null;
+	</update>
+
+	<delete id="deleteMonthTable">
+		DELETE FROM watch_#{year}_#{month} WHERE end_time is null;
+	</delete>
+
+</mapper>

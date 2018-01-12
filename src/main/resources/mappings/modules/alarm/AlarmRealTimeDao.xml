@@ -1,0 +1,252 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.actec.bsms.repository.dao.AlarmRealTimeDao">
+
+	<!--<resultMap id="alarmStatsMap" type="com.infosoul.mserver.modules.alarm.stats.vo.AlarmStatsVo">-->
+		<!--<id column="K" property="key"/>-->
+		<!--<id column="V" property="value"/>-->
+	<!--</resultMap>-->
+
+	<update id="createTable">
+		<![CDATA[
+		CREATE TABLE IF NOT EXISTS alarm_realtime  (
+		alarm_result_id VARCHAR(255)  NOT NULL ,
+		element INT(11),
+		object VARCHAR(255)  NOT NULL,
+		code INT(11),
+		level INT(11),
+		description VARCHAR(1200)  DEFAULT NULL,
+		alarm_timestamp INT,
+		pfix VARCHAR(255)  DEFAULT NULL,
+		sys_domain VARCHAR(255)  DEFAULT NULL,
+		status INT(11),
+		user_id VARCHAR(255) DEFAULT NULL,
+		office_ids VARCHAR(2550) DEFAULT NULL,
+		confirm_date INT,
+		clear_date INT,
+		PRIMARY KEY (alarm_result_id)
+		) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
+		]]>
+	</update>
+
+	<insert id="save" parameterType="com.actec.bsms.entity.AlarmRealTime">
+		insert into alarm_realtime(alarm_result_id, element, object, code, level, description, alarm_timestamp, pfix, sys_domain, status, user_id, office_ids, confirm_date, clear_date)
+		 values(#{alm.alarmResultId},#{alm.element},#{alm.object},#{alm.code}, #{alm.level}, #{alm.description},  #{alm.alarmTimestamp}, #{alm.pfix}, #{alm.sysDomain},#{alm.status},#{alm.userId}, #{alm.officeIds},#{alm.confirmDate},#{alm.clearDate});
+	</insert>
+
+	<update id="update" parameterType="com.actec.bsms.entity.AlarmRealTime">
+		update alarm_realtime c
+			<set>
+				c.confirm_date = #{alm.confirmDate},
+				c.clear_date = #{alm.clearDate},
+				c.status = #{alm.status},
+			</set>
+			 where alarm_result_id = #{alm.alarmResultId}
+	</update>
+
+	<select id="getById"  resultType="com.actec.bsms.entity.AlarmRealTime"
+			parameterType="com.actec.bsms.entity.AlarmRealTime">
+		SELECT * FROM
+			alarm_realtime
+		WHERE
+			alarm_result_id = #{id}
+	</select>
+
+	<select id="findByOfficeId" resultType="com.actec.bsms.entity.AlarmRealTime" parameterType="java.lang.String">
+		SELECT * FROM
+		alarm_realtime WHERE find_in_set(#{officeId}, office_ids) AND
+		<![CDATA[
+		status & 1 = 0
+		 ]]>
+		ORDER BY alarm_timestamp DESC
+	</select>
+
+	<select id="findByDate" resultType="com.actec.bsms.entity.AlarmRealTime">
+		SELECT * FROM alarm_realtime WHERE
+		alarm_timestamp between #{begin} and #{end}
+		<if test=" officeId != ''">
+			and find_in_set(#{officeId}, office_ids)
+		</if>
+		AND
+		<![CDATA[
+		status & 1 = 0;
+		 ]]>
+		order by alarm_timestamp desc
+	</select>
+
+
+	<!--<select id="getRecoveryTimeByObject" resultMap="alarmStatsMap">-->
+		<!--SELECT-->
+		<!--c.code as K,-->
+		<!--sum( #{endDate} - alarm_timestamp )-->
+		<!--AS V-->
+		<!--FROM-->
+		<!--alarm_realtime c-->
+		<!--WHERE-->
+		<!--c.alarm_timestamp between #{beginDate} and #{endDate}-->
+		<!--AND object LIKE CONCAT('%', '${object}', '%')-->
+		<!--<if test=" officeId != ''">-->
+			<!--and find_in_set(#{officeId}, office_ids)-->
+		<!--</if>-->
+		<!--GROUP BY c.code-->
+	<!--</select>-->
+
+	<!--<select id="getRecoveryTimeByCode" resultMap="alarmStatsMap">-->
+		<!--SELECT-->
+		<!--c.object as K,-->
+		<!--sum( #{endDate} - alarm_timestamp )-->
+		<!--AS V-->
+		<!--FROM-->
+		<!--alarm_realtime c-->
+		<!--WHERE-->
+		<!--c.alarm_timestamp between #{beginDate} and #{endDate}-->
+		<!--AND c.code = #{code}-->
+		<!--<if test=" officeId != ''">-->
+			<!--and find_in_set(#{officeId}, office_ids)-->
+		<!--</if>-->
+		<!--GROUP BY c.object-->
+	<!--</select>-->
+
+
+	<!--<select id="getAlarmCountByObject" resultMap="alarmStatsMap">-->
+		<!--SELECT-->
+		<!--c.code as K,-->
+		<!--count(alarm_result_id)-->
+		<!--AS V-->
+		<!--FROM-->
+		<!--alarm_realtime c-->
+		<!--WHERE-->
+		<!--c.alarm_timestamp between #{beginDate} and #{endDate}-->
+		<!--AND object LIKE CONCAT('%', '${object}', '%')-->
+		<!--<if test=" officeId != ''">-->
+			<!--and find_in_set(#{officeId}, office_ids)-->
+		<!--</if>-->
+		<!--GROUP BY c.code-->
+	<!--</select>-->
+
+
+	<!--<select id="getAlarmCountByCode" resultMap="alarmStatsMap">-->
+		<!--SELECT-->
+		<!--c.object as K,-->
+		<!--count(alarm_result_id)-->
+		<!--AS V-->
+		<!--FROM-->
+		<!--alarm_realtime c-->
+		<!--WHERE-->
+		<!--c.alarm_timestamp between #{beginDate} and #{endDate}-->
+		<!--AND c.code = #{code}-->
+		<!--<if test=" officeId != ''">-->
+			<!--and find_in_set(#{officeId}, office_ids)-->
+		<!--</if>-->
+		<!--GROUP BY c.object-->
+	<!--</select>-->
+
+
+	<select id="findByObjDesc" resultType="com.actec.bsms.entity.AlarmRealTime">
+		SELECT * FROM alarm_realtime
+		WHERE
+		object = #{object} AND description LIKE  CONCAT('%', '${description}', '%')
+
+	</select>
+
+	<delete id="deleteById" parameterType="java.lang.String">
+		DELETE FROM alarm_realtime where alarm_result_id = #{id}
+	</delete>
+
+	<select id="find" resultType="com.actec.bsms.entity.AlarmRealTime" parameterType="com.actec.bsms.entity.AlarmRealTime">
+		SELECT * FROM
+		alarm_realtime
+		WHERE
+		object LIKE CONCAT('%', '${object}', '%')
+		AND code = #{param.code}
+		<if test=" param.pfix != ''">
+			and pfix = #{param.pfix}
+		</if>
+		<!--<if test=" param.sysDomain != ''">
+			and sys_domain = #{param.sysDomain}
+		</if>-->
+		<if test=" param.description != ''">
+			and description = #{param.description}
+		</if>
+		AND
+		<![CDATA[
+		status & 1 = 0;
+		 ]]>
+	</select>
+
+	<select id="findCompleList" resultType="com.actec.bsms.entity.AlarmRealTime">
+	select * from alarm_realtime c
+	<where>
+		c.alarm_timestamp between #{param.beginDate} and #{param.endDate}
+		<if test=" param.levels != null and param.levels.size != 0 ">
+			and level IN
+			<foreach item="level" index="index" collection="param.levels"
+					 open="(" separator="," close=")">
+				#{level}
+			</foreach>
+		</if>
+		<if test=" param.codes != null and param.codes.size != 0 ">
+			and code IN
+			<foreach item="code" index="index" collection="param.codes"
+					 open="(" separator="," close=")">
+				#{code}
+			</foreach>
+		</if>
+	</where>
+	ORDER BY c.alarm_timestamp DESC
+</select>
+
+	<select id="getAlmCountByLevel" resultType="java.lang.Integer">
+		SELECT COUNT(1) FROM alarm_realtime WHERE level = #{level} AND
+			find_in_set(#{officeId}, office_ids) AND
+		<![CDATA[
+		status & 1 = 0;
+		 ]]>
+	</select>
+
+	<select id="findPair" parameterType="com.actec.bsms.entity.AlarmRealTime" resultType="com.actec.bsms.entity.AlarmRealTime">
+		SELECT * FROM alarm_realtime a WHERE 1 = 1
+		<if test=" alm.pfix != ''">
+			and a.pfix = #{alm.pfix}
+		</if>
+		<if test=" alm.element != -1">
+			and a.element = #{alm.element}
+		</if>
+		<if test=" alm.object != ''">
+			and a.object = #{alm.object}
+		</if>
+		<if test=" alm.code != -1">
+			and a.code = #{alm.code}
+		</if>
+		<if test=" alm.level != -1">
+			and a.level = #{alm.level}
+		</if>
+		<if test=" alm.description != ''">
+			and a.description = #{alm.description}
+		</if>
+	</select>
+
+
+	<select id="findGisAlarms" resultType="com.actec.bsms.entity.AlarmRealTime">
+		SELECT * FROM alarm_realtime WHERE object like CONCAT('%', #{object},'%')  and level = 0
+		<if test=" officeId != ''">
+			and find_in_set(#{officeId}, office_ids)
+		</if>
+		order by alarm_timestamp desc
+	</select>
+
+
+	<select id="countAlarmNormal" resultType="java.lang.Integer">
+		  SELECT COUNT(*) FROM  alarm_realtime a WHERE a.level = 1 AND  find_in_set(#{officeIds},a.office_Ids)
+	</select>
+
+	<select id="countAlarmSlight" resultType="java.lang.Integer">
+		SELECT count(*) FROM alarm_realtime a WHERE  a.level = 2  AND find_in_set(#{officeIds},a.office_Ids)
+	</select>
+
+	<select id="countAlarmNotice" resultType="java.lang.Integer">
+		SELECT count(*) FROM  alarm_realTime a WHERE a.level= 0  AND  find_in_set(#{officeIds},a.office_Ids)
+	</select>
+</mapper>

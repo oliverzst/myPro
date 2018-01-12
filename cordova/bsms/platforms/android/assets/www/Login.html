@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Security-Policy" content="default-src 'self' data: gap: https://ssl.gstatic.com 'unsafe-eval'; style-src 'self' 'unsafe-inline'; media-src *;connect-src *;">
+        <meta name="format-detection" content="telephone=no">
+        <meta name="msapplication-tap-highlight" content="no">
+        <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width">
+        <link rel="stylesheet" type="text/css" href="css/login/login.css">
+        <link rel="stylesheet" type="text/css" href="css/commonTips.css">
+        <script type="text/javascript" src="js/jquery-1.11.0.min.js"></script>
+        <script type="text/javascript" src="js/alertPopShow.js"></script>
+        <script type="text/javascript" src="js/vue.js"></script>
+        <title>基站巡检系统</title>
+    </head>
+    <body>
+        <div id='login'>
+            <!-- 注册板块 -->
+            <div id='registerBox' v-show="which == 'Register'">
+                <form>
+                    <input type="text" id='enterUser' placeholder="用户名">
+                    <p v-show="UserNameEmpty == true">用户名不能为空</p>
+                    <input type="password" id='erterpassword' placeholder="请输入密码">
+                    <p v-show="EnterPassword == true">请输入密码</p>
+                    <input type="password" id='confirmpassword' placeholder="请确认密码">
+                    <p v-show="PsdDiffrient == true">两次密码不一致</p>
+                    <input type="text" id='erterName' placeholder="请输入姓名">
+                    <p v-show="EnterRealName == true">请输入真实姓名</p>
+                    <input type="text" id='erterNumber' placeholder="请输入手机号">
+                    <p v-show="EnterPhoneNo == true">请输入合法的手机号码</p>
+                    <input type="text" id='enterIp' placeholder="请输入服务器IP">
+                    <p v-show="EnterIp == true">请输入正确的服务器IP地址</p>
+                    <input type="button" id="registerbtn" @click="Register" value="注 册">
+                    <a id='userLogin' @click="ToLogin">已有账号，直接登录</a>
+                </form>
+            </div>
+            <!-- 登录板块 -->
+            <div id='loginBox' v-show="which == 'Login'">
+                <div id="LogoImg"></div>
+                <div id="LogoText"></div>
+                <form>
+                    <input type="text" id='userName' placeholder="用户名/手机号">
+                    <p v-show="loginNameEmpty == true">用户名不能为空</p>
+                    <input type="password" id='password' placeholder="请输入密码">
+                    <p v-show="loginPsd == true">请输入密码</p>
+                    <input type="text" id='ipadress' placeholder="请输入服务器IP">
+                    <p v-show="loginIp == true">请输入服务器ip地址</p>
+                    <input type="button" id="loginbtn" @click="Login" value="Sign in">
+                    <a id='userRegister' @click="ToReg">没有账号？马上注册</a>
+                </form>
+            </div>
+            <!-- 加载板块 -->
+            <div id='loadingBox' v-show="which == 'loading'">
+                <div id='LoadingLogo'></div>
+                <div id='LoadingText'></div>
+            </div>
+        </div>
+    </body>
+    <script type="text/javascript" src="js/login/login.js"></script>
+</html>

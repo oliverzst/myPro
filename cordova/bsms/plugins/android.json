@@ -1,0 +1,30 @@
+{
+  "prepare_queue": {
+    "installed": [],
+    "uninstalled": []
+  },
+  "config_munge": {
+    "files": {}
+  },
+  "installed_plugins": {
+    "cordova-plugin-whitelist": {
+      "PACKAGE_NAME": "com.actec.bsms"
+    },
+    "cordova-plugin-device": {
+      "PACKAGE_NAME": "com.actec.bsms"
+    },
+    "cordova-plugin-imei": {
+      "PACKAGE_NAME": "com.actec.bsms"
+    },
+    "cordova-plugin-geolocation": {
+      "PACKAGE_NAME": "com.actec.bsms"
+    },
+    "cordova-plugin-file": {
+      "PACKAGE_NAME": "com.actec.bsms"
+    },
+    "cordova-plugin-file-transfer": {
+      "PACKAGE_NAME": "com.actec.bsms"
+    }
+  },
+  "dependent_plugins": {}
+}

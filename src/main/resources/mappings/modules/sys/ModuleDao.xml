@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.actec.bsms.repository.dao.ModuleDao">
+
+	<!-- 创建目录表 -->
+	<update id="createTable">
+		<![CDATA[
+		CREATE TABLE IF NOT EXISTS sys_module (
+		  id int AUTO_INCREMENT COMMENT '编号',
+		  name varchar(100) NOT NULL COMMENT '名称',
+		  description varchar(255) DEFAULT NULL COMMENT '描述',
+		  input_type varchar(255) DEFAULT NULL COMMENT '输入类型',
+		  create_date datetime NOT NULL COMMENT '创建时间',
+		  update_date datetime NOT NULL COMMENT '更新时间',
+		  remarks varchar(255) DEFAULT NULL COMMENT '备注信息',
+		  del_flag char(1) NOT NULL DEFAULT '0' COMMENT '删除标记',
+		  PRIMARY KEY (`id`)
+		) COMMENT='目录表';
+		]]>
+	</update>
+
+	<!-- 初始化数据 -->
+	<update id="initTable">
+		INSERT INTO `sys_module` VALUES (1, '电源', '', '', now(), now(), null, '0');
+	</update>
+
+	<update id="initTable1">
+		INSERT INTO `sys_module` VALUES (2, 'RCU', '', '', now(), now(), null, '0');
+	</update>
+
+	<update id="initTable2">
+		INSERT INTO `sys_module` VALUES (3, 'CCU', '', '', now(), now(), null, '0');
+	</update>
+
+	<update id="initTable3">
+		INSERT INTO `sys_module` VALUES (4, '信道机', '', '', now(), now(), null, '0');
+	</update>
+
+	<update id="initTable4">
+		INSERT INTO `sys_module` VALUES (5, '合路器', '', '', now(), now(), null, '0');
+	</update>
+
+	<update id="initTable5">
+		INSERT INTO `sys_module` VALUES (6, '分路器', '', '', now(), now(), null, '0');
+	</update>
+
+	<update id="initTable6">
+		INSERT INTO `sys_module` VALUES (7, '馈线', '', '', now(), now(), null, '0');
+	</update>
+
+	<update id="initTable7">
+		INSERT INTO `sys_module` VALUES (8, '网络接口', '', '', now(), now(), null, '0');
+	</update>
+
+    <sql id="menuColumns">
+    	a.id,
+    	a.name,
+    	a.description,
+		a.input_type,
+		a.create_date,
+		a.update_date,
+		a.remarks,
+		a.del_flag
+    </sql>
+    
+	<select id="get" resultType="com.actec.bsms.entity.Module">
+		SELECT
+			<include refid="menuColumns"/>
+		FROM sys_module a
+		WHERE a.id = #{id} AND a.del_flag = 0
+	</select>
+
+	<select id="findLast" resultType="com.actec.bsms.entity.Module">
+		SELECT <!-- DISTINCT -->
+		<include refid="menuColumns"/>
+		FROM sys_module a
+		WHERE a.del_flag = 0
+		ORDER BY a.id DESC LIMIT 1
+	</select>
+	
+	<select id="findList" resultType="com.actec.bsms.entity.Module">
+		SELECT <!-- DISTINCT -->
+			<include refid="menuColumns"/>
+		FROM sys_module a
+		WHERE a.del_flag = 0
+	</select>
+	
+	<select id="findAllList" resultType="com.actec.bsms.entity.Module">
+		SELECT
+			<include refid="menuColumns"/>
+		FROM sys_module a
+		WHERE a.del_flag = 0
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO sys_module(
+			id,
+			name,
+			description,
+			input_type,
+			create_date,
+			update_date, 
+			remarks, 
+			del_flag
+		) VALUES (
+			#{id},
+			#{name},
+			#{description},
+			#{inputType},
+			#{createDate},
+			#{updateDate}, 
+			#{remarks}, 
+			#{delFlag}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE sys_module SET
+			name = #{name},
+			description = #{description},
+			input_type = #{inputType},
+			update_date = #{updateDate}, 
+			remarks = #{remarks}
+		WHERE id = #{id}
+	</update>
+
+	<update id="delete">
+		UPDATE sys_module SET
+			del_flag = 1
+		WHERE id = #{id}
+	</update>
+
+	<!-- 删除设备和设备组关联表数据 -->
+	<delete id="deleteInspectDeviceModule">
+		DELETE FROM inspect_device_module WHERE module_id = #{moduleId} AND inspect_device_type_id = #{inspectDeviceTypeId};
+	</delete>
+
+	<!-- 插入设备和设备组关联表数据 -->
+	<insert id="insertInspectDeviceModule">
+		INSERT INTO inspect_device_module(
+		inspect_device_type_id,
+		module_id
+		) VALUES (
+		#{inspectDeviceTypeId},
+		#{moduleId}
+		)
+	</insert>
+	
+</mapper>

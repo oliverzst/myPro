@@ -1,0 +1,266 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.actec.bsms.repository.dao.TaskDao">
+	
+    <sql id="taskColumns">
+    	a.id,
+    	a.task_name,
+    	a.description,
+		a.facility_domain,
+		a.release_time,
+		a.release_by,
+		a.inspect_time,
+		a.inspect_by,
+		a.type,
+		a.state,
+		a.sign_in_time,
+		a.inspect_records,
+		a.end_time,
+		a.apply_by,
+		a.submit_time,
+		a.inspect_device_type_id,
+--         fac.name AS "facilityName",
+        ru.id AS "releaseUser.id",
+        ru.name AS "releaseUser.name",
+        iu.id AS "inspectUser.id",
+        iu.name AS "inspectUser.name",
+        idt.id AS "inspectDeviceType.id",
+        idt.name AS "inspectDeviceType.name"
+    </sql>
+    
+    <sql id="taskJoins">
+-- 		LEFT JOIN facility fac ON fac.domain = a.facility_domain
+        LEFT JOIN sys_user ru ON ru.id = a.release_by
+        LEFT JOIN sys_user iu ON iu.id = a.inspect_by
+        LEFT JOIN inspect_device_type idt ON idt.id = a.inspect_device_type_id
+    </sql>
+
+	<select id="get" resultType="com.actec.bsms.entity.Task">
+		SELECT
+			<include refid="taskColumns"/>
+		FROM task a
+			<include refid="taskJoins"/>
+		WHERE a.id = #{id}
+	</select>
+
+	<select id="findAllList" resultType="com.actec.bsms.entity.Task">
+		SELECT
+			<include refid="taskColumns"/>
+		FROM task a
+		<include refid="taskJoins"/>
+	</select>
+
+	<select id="findNoFinishList" resultType="com.actec.bsms.entity.Task">
+		SELECT
+		<include refid="taskColumns"/>
+		FROM task a
+		<include refid="taskJoins"/>
+		WHERE a.end_time is null
+	</select>
+
+	<select id="findByFacilityDomain" resultType="com.actec.bsms.entity.Task">
+		SELECT
+		<include refid="taskColumns"/>
+		FROM task a
+		<include refid="taskJoins"/>
+		WHERE a.facility_domain = #{facilityDomain} AND type = #{type} AND a.end_time is null
+	</select>
+
+	<select id="findByFacilityAndUser" resultType="com.actec.bsms.entity.Task">
+		SELECT
+		<include refid="taskColumns"/>
+		FROM task a
+		<include refid="taskJoins"/>
+		WHERE a.facility_domain = #{facilityDomain} AND a.inspect_by = #{userId} AND type = #{type} AND a.end_time is null
+	</select>
+
+    <select id="findByFacilityAndUserAndInspectDeviceType" resultType="com.actec.bsms.entity.Task">
+        SELECT
+        <include refid="taskColumns"/>
+        FROM task a
+        <include refid="taskJoins"/>
+        WHERE a.facility_domain = #{facilityDomain} AND a.inspect_by = #{userId} AND a.inspect_device_type_id = #{inspectDeviceTypeId} AND type = #{type} AND a.end_time is null
+    </select>
+
+	<select id="findByFacAndReleaseByAndInspectBy" resultType="com.actec.bsms.entity.Task">
+		SELECT
+		<include refid="taskColumns"/>
+		FROM task a
+		<include refid="taskJoins"/>
+		WHERE a.facility_domain = #{facilityDomain} AND a.release_by = #{releaseBy} AND a.inspect_by = #{inspectBy} AND type = #{type} AND a.end_time is null
+	</select>
+
+	<select id="findByFacilityDomainAndUserId" resultType="com.actec.bsms.entity.Task">
+		SELECT
+		<include refid="taskColumns"/>
+		FROM task a
+		<include refid="taskJoins"/>
+		WHERE a.facility_domain = #{facilityDomain} AND type = #{type} AND (a.inspect_by = 0 or a.inspect_by = #{userId} or a.release_by = #{userId}) AND a.end_time is null
+	</select>
+
+	<select id="findByInspectBy" resultType="com.actec.bsms.entity.Task">
+		SELECT
+		<include refid="taskColumns"/>
+		FROM task a
+		<include refid="taskJoins"/>
+		WHERE a.inspect_by = #{userId} AND type = #{type} AND a.end_time is null
+	</select>
+
+	<select id="checkTaskExist" resultType="com.actec.bsms.entity.Task">
+		SELECT
+		<include refid="taskColumns"/>
+		FROM task a
+		<include refid="taskJoins"/>
+		WHERE a.task_name = #{taskName} AND description = #{description} AND facility_domain = #{facilityDomain} AND apply_by = #{applyBy} AND a.end_time is null
+	</select>
+
+	<select id="checkReceivedTaskExist" resultType="com.actec.bsms.entity.Task">
+		SELECT
+		<include refid="taskColumns"/>
+		FROM task a
+		<include refid="taskJoins"/>
+		WHERE a.task_name = #{taskName} AND description = #{description} AND facility_domain = #{facilityDomain} AND a.end_time is null AND a.state!=0
+	</select>
+
+	<select id="findByInspectByEnd" resultType="com.actec.bsms.entity.Task">
+		SELECT
+		<include refid="taskColumns"/>
+		FROM task a
+		<include refid="taskJoins"/>
+		WHERE a.inspect_by = #{userId} AND a.end_time is not null AND type = #{type}
+	</select>
+
+	<select id="findByInspectByMonth" resultType="com.actec.bsms.entity.Task">
+		SELECT
+		<include refid="taskColumns"/>
+		FROM task_#{year}_#{month} a
+		<include refid="taskJoins"/>
+		WHERE a.inspect_by = #{userId} AND type = #{type}
+	</select>
+
+	<select id="findHistoryTaskByFacilityDomainByMonth" resultType="com.actec.bsms.entity.Task">
+		SELECT
+		<include refid="taskColumns"/>
+		FROM task_#{year}_#{month} a
+		<include refid="taskJoins"/>
+		WHERE a.facility_domain = #{facilityDomain} AND type = #{type}
+		ORDER BY a.end_time desc LIMIT 10
+	</select>
+
+	<select id="findHistoryTaskByFacilityDomain" resultType="com.actec.bsms.entity.Task">
+		SELECT
+		<include refid="taskColumns"/>
+		FROM task a
+		<include refid="taskJoins"/>
+		WHERE a.facility_domain = #{facilityDomain} AND a.end_time is not null AND type = #{type}
+		ORDER BY a.end_time desc LIMIT 10
+	</select>
+
+	<select id="findNewTask" resultType="com.actec.bsms.entity.Task">
+		SELECT
+		<include refid="taskColumns"/>
+		FROM task a
+		<include refid="taskJoins"/>
+		WHERE a.end_time is null
+		ORDER BY a.id desc LIMIT 1
+	</select>
+
+	<insert id="insert">
+		INSERT INTO task(
+			id,
+			task_name,
+			description,
+			facility_domain,
+			release_time,
+			release_by,
+			inspect_time,
+			inspect_by,
+			type,
+			state,
+			sign_in_time,
+			inspect_records,
+			end_time,
+			apply_by,
+			submit_time,
+			inspect_device_type_id
+		) VALUES (
+			#{id},
+			#{taskName},
+			#{description},
+			#{facilityDomain},
+			#{releaseTime},
+			#{releaseBy},
+			#{inspectTime},
+			#{inspectBy},
+			#{type},
+			#{state},
+			#{signInTime},
+			#{inspectRecords},
+			#{endTime},
+			#{applyBy},
+			#{submitTime},
+			#{inspectDeviceTypeId}
+		)
+	</insert>
+
+	<update id="update">
+		UPDATE task SET
+			task_name = #{taskName},
+			description = #{description},
+			inspect_time = #{inspectTime},
+			inspect_by = #{inspectBy},
+			state = #{state},
+			sign_in_time = #{signInTime},
+			inspect_records = #{inspectRecords},
+			end_time = #{endTime},
+			apply_by = #{applyBy},
+			submit_time = #{submitTime},
+			inspect_device_type_id = #{inspectDeviceTypeId}
+		WHERE id = #{id}
+	</update>
+
+	<delete id="delete">
+		DELETE FROM task WHERE id = #{id}
+	</delete>
+
+	<delete id="deleteTask">
+		DELETE FROM task WHERE id = #{id}
+	</delete>
+
+	<update id="createTable">
+		<![CDATA[
+		CREATE TABLE IF NOT EXISTS task (
+		  id int AUTO_INCREMENT COMMENT '编号',
+		  task_name varchar(64) DEFAULT NULL COMMENT '任务名称',
+		  description varchar(100) DEFAULT NULL COMMENT '任务描述',
+		  facility_domain varchar(64) NOT NULL COMMENT '基站域名',
+		  release_time datetime NOT NULL COMMENT '任务创建时间',
+		  release_by int COMMENT '任务创建人',
+		  inspect_time datetime DEFAULT NULL COMMENT '任务执行时间',
+		  inspect_by int COMMENT '任务执行人',
+		  type int COMMENT '任务类型',
+		  state int COMMENT '任务状态',
+		  sign_in_time datetime DEFAULT NULL COMMENT '任务签到时间',
+		  inspect_records varchar(20000) DEFAULT NULL COMMENT '任务记录',
+		  end_time datetime DEFAULT NULL COMMENT '任务完成时间',
+		  apply_by int COMMENT '任务指定人',
+		  submit_time datetime DEFAULT NULL COMMENT '任务提交时间',
+		  inspect_device_type_id int COMMENT '指定巡检设备类型',
+		  PRIMARY KEY (`id`)
+		) COMMENT='任务表';
+		]]>
+	</update>
+
+	<update id="createMonthTable">
+		RENAME TABLE task TO task_#{year}_#{month};
+	</update>
+
+	<update id="updateTaskTable">
+		INSERT INTO task SELECT * FROM task_#{year}_#{month} WHERE end_time is null;
+	</update>
+
+	<delete id="deleteMonthTable">
+		DELETE FROM task_#{year}_#{month} WHERE end_time is null;
+	</delete>
+
+</mapper>
