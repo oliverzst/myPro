@@ -13,6 +13,7 @@
 		<result property="troubleShootInfo" column="trouble_shoot_info" typeHandler="com.actec.bsms.utils.ConvertBlobTypeHandler"/>
 		<result property="endTime" column="end_time" />
         <result property="taskIds" column="task_ids" />
+        <result property="inspectDeviceTypeId" column="inspect_device_type_id" />
 		<collection property="facility" ofType="com.actec.bsms.entity.Facility">
             <id property="id" column="facility.id" />
 			<result property="name" column="facility.name" />
@@ -36,6 +37,7 @@
 		<result property="state" column="state" />
 		<result property="endTime" column="end_time" />
         <result property="taskIds" column="task_ids" />
+		<result property="inspectDeviceTypeId" column="inspect_device_type_id" />
 		<collection property="facility" ofType="com.actec.bsms.entity.Facility">
 			<id property="id" column="facility.id" />
 			<result property="name" column="facility.name" />
@@ -43,6 +45,10 @@
 		<collection property="inspectUser" ofType="com.actec.bsms.entity.User">
 			<id property="id" column="inspectUser.id" />
 			<result property="name" column="inspectUser.name" />
+		</collection>
+		<collection property="inspectDeviceType" ofType="com.actec.bsms.entity.InspectDeviceType">
+			<id property="id" column="inspectDeviceType.id" />
+			<result property="name" column="inspectDeviceType.name" />
 		</collection>
 	</resultMap>
 

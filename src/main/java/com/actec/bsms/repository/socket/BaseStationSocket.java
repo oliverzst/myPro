@@ -37,7 +37,9 @@ public class BaseStationSocket extends AbstractVerticle{
                     List<RcuInfo> currentRcus = JSON.parseArray(buf.toString(), RcuInfo.class);
                     BASE_STASTION_LIST.clear();
                     BASE_STASTION_LIST.addAll(currentRcus);
-                    logger.debug("received base station list : " + RcuInfo.listToString(currentRcus));
+                    if(logger.isDebugEnabled()) {
+                        logger.debug("received base station list : " + RcuInfo.listToString(currentRcus));
+                    }
                     socket.send("success", datagramPacket.sender().port(), datagramPacket.sender().host(), toClientResult -> {
                         logger.debug("send success to client");
                     });

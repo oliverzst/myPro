@@ -186,7 +186,7 @@
 			inspect_device_type = #{inspectDeviceType}
 		WHERE id = #{id}
 	</update>
-	
+
 	<!-- 逻辑删除用户 -->
 	<update id="delete">
 		UPDATE sys_user SET 

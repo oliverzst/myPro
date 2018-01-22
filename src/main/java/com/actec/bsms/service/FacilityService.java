@@ -2,7 +2,9 @@ package com.actec.bsms.service;
 
 import com.actec.bsms.entity.Facility;
 import com.actec.bsms.repository.dao.FacilityDao;
+import com.actec.bsms.repository.dao.InspectDao;
 import com.actec.bsms.repository.dao.UserDao;
+import com.actec.bsms.service.cache.FacilityGroupCache;
 import com.actec.bsms.utils.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -20,6 +22,10 @@ public class FacilityService {
 
     @Autowired
     FacilityDao facilityDao;
+    @Autowired
+    FacilityGroupCache facilityGroupCache;
+    @Autowired
+    InspectDao inspectDao;
 
     @Autowired
     UserDao userDao;
@@ -34,6 +40,8 @@ public class FacilityService {
                 facilityDao.insert(facility);
             } else {
                 facilityDao.update(facility);
+                //更新缓存数据
+                facilityGroupCache.updateFacility(facility);
             }
         }
     }
@@ -42,6 +50,8 @@ public class FacilityService {
 
     public void delete(int id){
         facilityDao.delete(id);
+        facilityDao.deleteFacilityGroup(get(id).getDomain());
+        facilityGroupCache.deleteFacility(id);
     }
 
     public Facility findByDomain(String domain) {
@@ -68,7 +78,7 @@ public class FacilityService {
         save(facility);
     }
 
-    public void finishInspect(String facilityDomain, int userId, int taskId) {
+    public void finishInspect(String facilityDomain, int userId, int lastInspectId) {
         Facility facility = findByDomain(facilityDomain);
         String[] s = facility.getStatus().split("，|：");
         if (s.length<=2) {
@@ -85,7 +95,8 @@ public class FacilityService {
                 }
             }
         }
-        facility.setLastTaskId(taskId);
+        facility.setLastTaskId(lastInspectId);
+        facility.setLastInspect(inspectDao.findById(lastInspectId));
         save(facility);
     }
 

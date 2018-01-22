@@ -35,7 +35,9 @@ public class RealtimeAlarmSocket extends AbstractVerticle {
                 socket.handler(datagramPacket -> {
                     Buffer buf = datagramPacket.data();
                     List<AlarmRealTime> currentAlarms = JSON.parseArray(buf.toString(), AlarmRealTime.class);
-                    logger.debug("received realTime alarm list : " + AlarmRealTime.listToString(currentAlarms));
+                    if(logger.isDebugEnabled()) {
+                        logger.debug("received realTime alarm list : " + AlarmRealTime.listToString(currentAlarms));
+                    }
                     REALTIME_ALARM_LIST.clear();
                     REALTIME_ALARM_LIST.addAll(currentAlarms);
                     socket.send("success", datagramPacket.sender().port(), datagramPacket.sender().host(), toClientResult -> {

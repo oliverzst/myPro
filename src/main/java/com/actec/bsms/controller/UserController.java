@@ -1,5 +1,6 @@
 package com.actec.bsms.controller;
 
+import com.actec.bsms.entity.FacilityGroup;
 import com.actec.bsms.entity.InspectDeviceType;
 import com.actec.bsms.entity.User;
 import com.actec.bsms.service.InspectDeviceTypeService;
@@ -50,6 +51,13 @@ public class UserController extends BaseController{
             }
             User user = userList.get(0);
             if (SystemService.validatePassword(password, user.getPassword())) {
+                if (!user.getLoginName().equals("admin")) {
+                    if (!StringUtils.isEmpty(user.getLoginDevice())) {
+                        result = "该帐号已在别处登录";
+                        return JSON.toJSONString(result);
+                    }
+                    deviceId = "已登录";
+                }
                 userService.updateLoginInfo(user.getId(), deviceId);
                 user = userService.get(user.getId(), true);
                 return JSON.toJSONString(user);
@@ -155,9 +163,9 @@ public class UserController extends BaseController{
 
     @GET
     @Path("/logout")
-    public String logout(@QueryParam("loginName")String loginName) {
+    public String logout(@QueryParam("userId")int userId) {
         try {
-            User user = userService.findByLoginName(loginName).get(0);
+            User user = userService.get(userId, true);
             user.setLoginDevice("");
             userService.save(user);
             result = "登出成功";
@@ -229,7 +237,7 @@ public class UserController extends BaseController{
                     user.setRoleId(userList.get(i).getRoleId());
                     if (userList.get(i).getRoleId()==2) {
                         //为管理员
-                        user.setFacilityGroupId(1);
+                        user.setFacilityGroupId(FacilityGroup.ALL_FACILITY);
                         List<InspectDeviceType> inspectDeviceTypeList = inspectDeviceTypeService.findAll();
                         String inspectDeviceType = "";
                         for (int j=0;j<inspectDeviceTypeList.size();j++) {

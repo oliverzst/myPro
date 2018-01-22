@@ -79,7 +79,9 @@ public class FacilityController extends BaseController {
         try {
             int facilityGroupId = userService.get(userId, true).getFacilityGroupId();
             FacilityGroup facilityGroup = facilityGroupService.get(facilityGroupId, true);
-            if (null!=facilityGroup) return JSON.toJSONString(facilityGroup.getFacilityList());
+            if (null!=facilityGroup) {
+                return JSON.toJSONString(facilityGroup.getFacilityList());
+            }
             return "[]";
         } catch (Exception e) {
             logger.error(e.getMessage());

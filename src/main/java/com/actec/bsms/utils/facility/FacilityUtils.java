@@ -41,6 +41,7 @@ public class FacilityUtils {
                 facilityService.delete(facilityList.get(j).getId());
             }
         }
+        //更新全基站设备组信息
         FacilityGroup facilityGroup = facilityGroupService.get(FacilityGroup.ALL_FACILITY, true);
         facilityGroup.setFacilityList(facilityService.findAll());
         facilityGroupService.updateFacilityGroup(facilityGroup);
@@ -54,9 +55,10 @@ public class FacilityUtils {
         facility.setSysNumber(rcuInfo.getRcu_lai());
         facility.setLongitude(new BigDecimal(rcuInfo.getGn()).setScale(5,BigDecimal.ROUND_HALF_UP));
         facility.setLatitude(new BigDecimal(rcuInfo.getGe()).setScale(5,BigDecimal.ROUND_HALF_UP));
-        facility.setManufacturer("海格恒通");
+        facility.setManufacturer(rcuInfo.getManufacturer()!=null?rcuInfo.getManufacturer():"");
         facility.setTchCount(rcuInfo.getTchCount());
         facility.setRcuStatus(rcuInfo.getRcuStatus());
+        facility.setAddress(rcuInfo.getTsAddress()!=null?rcuInfo.getTsAddress():"");
         if (facility.getStatus()==null) {
             facility.setStatus("");
         }

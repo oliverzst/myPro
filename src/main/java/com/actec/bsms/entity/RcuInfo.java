@@ -33,6 +33,7 @@ public class RcuInfo implements Serializable {
 	private String contact;
 	private String contact_phone;
 	private String photo;
+	private String tsAddress;
 	//动态属性
 	//控制信道频点号
 	private String cchFreq;
@@ -210,6 +211,14 @@ public class RcuInfo implements Serializable {
 		this.photo = photo;
 	}
 
+	public String getTsAddress() {
+		return tsAddress;
+	}
+
+	public void setTsAddress(String tsAddress) {
+		this.tsAddress = tsAddress;
+	}
+
 	public String getCchFreq() {
 		return cchFreq;
 	}
@@ -258,6 +267,7 @@ public class RcuInfo implements Serializable {
 				", contact='" + contact + '\'' +
 				", contact_phone='" + contact_phone + '\'' +
 				", photo='" + photo + '\'' +
+				", tsAddress='" + tsAddress + '\'' +
 				", cchFreq='" + cchFreq + '\'' +
 				", tchCount=" + tchCount +
 				", rcuStatus=" + rcuStatus +

@@ -24,6 +24,13 @@ public interface FacilityDao extends CrudDao<Facility> {
      * @param domain
      * @return
      */
-    public Facility findByDomain(@Param("domain") String domain);
+    Facility findByDomain(@Param("domain") String domain);
+
+    /**
+     * 删除关联表中的数据
+     * @param domain
+     * @return
+     */
+    void deleteFacilityGroup(@Param("domain") String domain);
 
 }

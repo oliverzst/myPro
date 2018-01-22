@@ -5,13 +5,19 @@ package com.actec.bsms.entity;
 
 import com.actec.bsms.utils.Global;
 
+import java.io.Serializable;
+
 /**
  * 角色Entity
  * @author Freelance
  * @version 2013-12-05
  */
-public class Role extends DataEntity<Role> {
-	
+public class Role extends DataEntity<Role> implements Serializable{
+
+	public final static  String ADMIN = "超级管理员";
+	public final static  String MASTER = "管理员";
+	public final static  String USER = "工程人员";
+
 	private static final long serialVersionUID = 1L;
 	private String name; 	// 角色名称
 	private String roleType;// 权限类型

@@ -5,6 +5,7 @@ package com.actec.bsms.entity;
 
 import com.alibaba.fastjson.annotation.JSONField;
 
+import java.io.Serializable;
 import java.util.Date;
 import java.util.List;
 
@@ -13,19 +14,15 @@ import java.util.List;
  * @author Freelance
  * @version 2013-12-05
  */
-public class User extends DataEntity<User> {
+public class User extends DataEntity<User> implements Serializable{
 
 	private static final long serialVersionUID = 1L;
 	private String loginName;// 登录名
 	private String password;// 密码
-//	private String no;		// 工号
 	private String name;	// 姓名
-//	private String email;	// 邮箱
 	private String phone;	// 电话
 	private String loginDevice;	// 登陆设备 为空则表示未登录
 	private Date loginDate;	// 最后登陆日期
-//	private String loginFlag;	// 登陆状态
-//	private String photo;	// 头像
 
 	private int facilityGroupId; //归属设备组
 	
@@ -43,7 +40,6 @@ public class User extends DataEntity<User> {
 
 	public User() {
 		super();
-//		this.loginFlag = Global.YES;
 	}
 	
 	public User(int id){
@@ -59,24 +55,7 @@ public class User extends DataEntity<User> {
 		super();
 		this.roleId = role.getId();
 	}
-	
-//	public String getPhoto() {
-//		return photo;
-//	}
-//
-//	public void setPhoto(String photo) {
-//		this.photo = photo;
-//	}
-//
-//	public String getLoginFlag() {
-//		return loginFlag;
-//	}
-//
-//	public void setLoginFlag(String loginFlag) {
-//		this.loginFlag = loginFlag;
-//	}
 
-//	@ExcelField(title="ID", type=1, align=2, sort=1)
 	public int getId() {
 		return id;
 	}
@@ -101,25 +80,9 @@ public class User extends DataEntity<User> {
 		return name;
 	}
 
-//	public String getNo() {
-//		return no;
-//	}
-//
-//	public void setNo(String no) {
-//		this.no = no;
-//	}
-
 	public void setName(String name) {
 		this.name = name;
 	}
-
-//	public String getEmail() {
-//		return email;
-//	}
-//
-//	public void setEmail(String email) {
-//		this.email = email;
-//	}
 
 	public String getPhone() {
 		return phone;
