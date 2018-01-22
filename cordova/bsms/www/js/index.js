@@ -375,6 +375,7 @@ var vm = new Vue({
 			getMyChartsHttp:"",
 			getHistoryDeviceList:"",
 			resetUserPsdHttp:"",
+			logoutHttp:"",
 		}
 	},
 	methods:{
@@ -2595,13 +2596,36 @@ var vm = new Vue({
 		},
 
 //退出登录 模块
-		UserExit:function(){
-			localStorage.removeItem("usermassage");
-			vm.UserStorage = {};
-			console.log("用户信息",vm.UserStorage);
-			setTimeout(function(){
-				location.href='Login.html';
-			},500)
+		UserExit:function(url){
+			popTipShow.confirm('提示',"是否退出？",['确 定','取 消'],function(e){
+				var _this = this;
+				if(e.target.className == 'ok'){
+					vm.getData(url,"GET",{
+						userId:vm.user.userId,
+					},function(data){
+						if(data){
+							console.log('退出登录返回',data);
+							if(data == '登出成功'){
+								webToast(data,'middle',1000);
+								localStorage.removeItem("usermassage");
+								vm.UserStorage = {};
+								console.log("用户信息",vm.UserStorage);
+								setTimeout(function(){
+									location.href='Login.html';
+								},1000)
+							}else {
+								webToast(data,'middle',2000);
+							}
+							
+						}
+					},function(err){
+						console.log(err);
+						webToast('网络错误','middle',2000);
+					})
+				}else if(e.target.className == 'cancel'){
+					_this.hide();
+				}
+			})
 		},
 //修改密码 模块
 		modifyPsd:function(url){
@@ -3854,6 +3878,7 @@ var vm = new Vue({
 				vm.getHistoryDeviceList="http://" + vm.IPstorage + ":8168/rs/statistics/getFacilityMap";
 				vm.getMyChartsHttp="http://" + vm.IPstorage + ":8168/rs/statistics/statisticsByUserAndFacility";
 				vm.resetUserPsdHttp="http://" + vm.IPstorage + ":8168/rs/user/resetPassword";
+				vm.logoutHttp="http://" + vm.IPstorage + ":8168/rs/user/logout";
 			}
 			//取得存于本地的用户登录信息
 			vm.UserStorage = JSON.parse(localStorage.getItem("usermassage"));
