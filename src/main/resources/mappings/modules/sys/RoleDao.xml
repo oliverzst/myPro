@@ -99,7 +99,7 @@
 	<update id="createTable">
 		<![CDATA[
 		CREATE TABLE IF NOT EXISTS sys_role (
-		  id int AUTO_INCREMENT COMMENT '编号',
+		  id TINYINT UNSIGNED AUTO_INCREMENT COMMENT '编号',
 		  name varchar(100) NOT NULL COMMENT '名称',
 		  role_type varchar(255) DEFAULT NULL COMMENT '类型',
 		  data_scope char(1) DEFAULT NULL COMMENT '数据域',

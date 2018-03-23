@@ -14,12 +14,6 @@ public interface TaskDao extends CrudDao<Task> {
 
     void createTable();
 
-    void createMonthTable(@Param("year") int year, @Param("month") int month);
-
-    void updateTaskTable(@Param("year") int year, @Param("month") int month);
-
-    void deleteMonthTable(@Param("year") int year, @Param("month") int month);
-
     void deleteTask(@Param("id") int id);
 
     /**
@@ -41,7 +35,7 @@ public interface TaskDao extends CrudDao<Task> {
      * @param
      * @return
      */
-    Task findNewTask();
+    Task findLastInsertTask();
 
     /**
      * 根据设备和用户查询指定类型任务，type=1巡检任务、type=2值守任务
@@ -111,8 +105,8 @@ public interface TaskDao extends CrudDao<Task> {
      * @param
      * @return
      */
-    List<Task> checkTaskExist(@Param("taskName") String taskName, @Param("description") String description, @Param("facilityDomain") String facilityDomain, @Param("applyBy") int applyBy);
+    int checkTaskExist(@Param("taskName") String taskName, @Param("description") String description, @Param("facilityDomain") String facilityDomain, @Param("applyBy") int applyBy);
 
-    List<Task> checkReceivedTaskExist(@Param("taskName") String taskName, @Param("description") String description, @Param("facilityDomain") String facilityDomain, @Param("applyBy") int applyBy);
+    int checkReceivedTaskExist(@Param("taskName") String taskName, @Param("description") String description, @Param("facilityDomain") String facilityDomain, @Param("applyBy") int applyBy);
 
 }

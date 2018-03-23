@@ -43,11 +43,14 @@ public class TaskController extends BaseController{
     @Autowired
     TaskCache taskCache;
 
+    /**
+     * 根据任务ID获取任务
+     */
     @GET
     @Path("/getTask")
     public String getTask(@QueryParam("taskId")int id) {
         try {
-            Inspect inspect = inspectService.get(id);
+            Inspect inspect = inspectService.findByIdByTableName(id);
             String result = JSON.toJSONString(inspect);
             return result;
         } catch (Exception e) {
@@ -56,32 +59,9 @@ public class TaskController extends BaseController{
         return JSON.toJSONString(failResult);
     }
 
-    @GET
-    @Path("/setTasks")
-    public String setTasks(@QueryParam("taskId")int id) {
-        try {
-            Task task = taskService.get(id);
-            taskCache.put(String.valueOf(id), task, -1);
-            return JSON.toJSONString(successResult);
-        } catch (Exception e) {
-            logger.error(e.getMessage());
-        }
-        return JSON.toJSONString(failResult);
-    }
-
-    @GET
-    @Path("/getMyTask")
-    public String getMyTask(@QueryParam("userId")int userId) {
-        try {
-            List<Task> taskList = taskService.findInspectTaskByUserId(userId);
-            taskList.addAll(taskService.findRepairTaskByUserId(userId));
-            return JSON.toJSONString(taskList, SerializerFeature.WriteMapNullValue);
-        } catch (Exception e) {
-            logger.error(e.getMessage());
-        }
-        return JSON.toJSONString(failResult);
-    }
-
+    /**
+     * 根据用户ID获取任务
+     */
     @GET
     @Path("/getAllTask")
     public String getAllTask(@QueryParam("userId")int userId) {
@@ -99,18 +79,9 @@ public class TaskController extends BaseController{
         return JSON.toJSONString(failResult);
     }
 
-    @GET
-    @Path("/getMyDutyTask")
-    public String getMyAlmTask(@QueryParam("userId")int userId) {
-        try {
-            List<Task> taskList = taskService.findDutyTaskByUserId(userId);
-            return JSON.toJSONString(taskList, SerializerFeature.WriteMapNullValue);
-        } catch (Exception e) {
-            logger.error(e.getMessage());
-        }
-        return JSON.toJSONString(failResult);
-    }
-
+    /**
+     * 管理员批量发布任务
+     */
     @GET
     @Path("/addTasks")
     public String addTasks(@QueryParam("taskInfo")String taskInfo) {
@@ -123,6 +94,9 @@ public class TaskController extends BaseController{
         return JSON.toJSONString(failResult);
     }
 
+    /**
+     * 用户接受任务
+     */
     @GET
     @Path("/receiveTask")
     public String receiveTask(@QueryParam("userId")int userId, @QueryParam("taskId")int taskId) {
@@ -135,6 +109,9 @@ public class TaskController extends BaseController{
         return JSON.toJSONString(failResult);
     }
 
+    /**
+     * 用户开始值守任务
+     */
     @GET
     @Path("/signWatchTask")
     public String signWatchTask(@QueryParam("taskId")int taskId) {
@@ -143,7 +120,7 @@ public class TaskController extends BaseController{
             Task task = taskService.get(taskId);
             taskService.excuteTask(task);
 
-            //开始值守
+            //开始值守事件
             watchService.startWatch(taskId, task.getInspectBy());
             return JSON.toJSONString(successResult);
         } catch (Exception e) {
@@ -152,6 +129,9 @@ public class TaskController extends BaseController{
         return JSON.toJSONString(failResult);
     }
 
+    /**
+     * 用户到站签到（还未实现功能）
+     */
     @GET
     @Path("/signBaseStation")
     //基站签到
@@ -161,6 +141,9 @@ public class TaskController extends BaseController{
         return JSON.toJSONString(successResult);
     }
 
+    /**
+     * 用户开始巡检（分为有任务巡检和自主巡检）
+     */
     @GET
     @Path("/signNoTask")
     public String signNoTask(@QueryParam("userId")int userId, @QueryParam("inspectDeviceType")int inspectDeviceType, @QueryParam("facilityDomain")String facilityDomain) {
@@ -199,6 +182,9 @@ public class TaskController extends BaseController{
         return JSON.toJSONString(failResult);
     }
 
+    /**
+     * 用户提交并完成值守任务
+     */
     @POST
     @Path("/submitWatch")
     public String submitWatch(@FormParam("taskId")int taskId, @FormParam("records")String records){
@@ -218,6 +204,9 @@ public class TaskController extends BaseController{
         }
     }
 
+    /**
+     * 用户提交并完成巡检
+     */
     @POST
     @Path("/submitInspect")
     public String submitInspect(@FormParam("inspectId")int inspectId, @FormParam("userId")int userId, @FormParam("inspectDeviceType")int inspectDeviceType,
@@ -255,6 +244,9 @@ public class TaskController extends BaseController{
         return JSON.toJSONString(failResult);
     }
 
+    /**
+     * 获取指定用户在指定设备上待提交的任务
+     */
     @GET
     @Path("/getSubmitTasks")
     public String getSubmitTasks(@QueryParam("facilityDomain")String facilityDomain, @QueryParam("userId")int userId,
@@ -269,6 +261,9 @@ public class TaskController extends BaseController{
         }
     }
 
+    /**
+     * 管理员确认后，结束任务
+     */
     @GET
     @Path("/finishTask")
     public String finishTask(@QueryParam("taskIds")String taskIds) {
@@ -287,6 +282,9 @@ public class TaskController extends BaseController{
         return JSON.toJSONString(failResult);
     }
 
+    /**
+     * 管理员删除任务
+     */
     @GET
     @Path("/deleteTask")
     public String deleteTask(@QueryParam("taskIds")String taskIds) {
@@ -302,6 +300,9 @@ public class TaskController extends BaseController{
         return JSON.toJSONString(failResult);
     }
 
+    /**
+     * 获取设备被巡检历史
+     */
     @GET
     @Path("/getFacilityTaskHistory")
     public String getFacilityTaskHistory(@QueryParam("facilityDomain")String facilityDomain, @QueryParam("year")String year,
@@ -316,6 +317,9 @@ public class TaskController extends BaseController{
         return JSON.toJSONString(failResult);
     }
 
+    /**
+     * 获取用户巡检历史
+     */
     @GET
     @Path("/getUserTaskHistory")
     public String getUserTaskHistory(@QueryParam("userId")int userId, @QueryParam("year")String year, @QueryParam("month")String month) {
@@ -329,6 +333,9 @@ public class TaskController extends BaseController{
         return JSON.toJSONString(failResult);
     }
 
+    /**
+     * 获取用户值守历史
+     */
     @GET
     @Path("/getUserWatchHistory")
     public String getUserDutyHistory(@QueryParam("userId")int userId, @QueryParam("year")String year, @QueryParam("month")String month) {
@@ -342,6 +349,9 @@ public class TaskController extends BaseController{
         return JSON.toJSONString(failResult);
     }
 
+    /**
+     * 导出用户巡检、值守历史
+     */
     @GET
     @Path("/exportInspectExcelByUser")
     public String exportInspectExcelByUser(@QueryParam("userId")int userId, @QueryParam("year")String year, @QueryParam("month")String month) {
@@ -364,6 +374,9 @@ public class TaskController extends BaseController{
         return JSON.toJSONString(failResult);
     }
 
+    /**
+     * 导出设备巡检、值守历史
+     */
     @GET
     @Path("/exportInspectExcelByFacility")
     public String exportInspectExcelByFacility(@QueryParam("facilityDomain")String facilityDomain, @QueryParam("year")String year, @QueryParam("month")String month) {

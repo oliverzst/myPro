@@ -124,28 +124,16 @@
 	<update id="createTable">
 		<![CDATA[
 		CREATE TABLE IF NOT EXISTS watch (
-		  id int AUTO_INCREMENT COMMENT '编号',
+		  id MEDIUMINT UNSIGNED AUTO_INCREMENT COMMENT '编号',
 		  watch_time datetime NOT NULL COMMENT '值守开始时间',
-		  watch_by int COMMENT '值守人',
+		  watch_by SMALLINT UNSIGNED COMMENT '值守人',
 		  watch_records varchar(20000) DEFAULT NULL COMMENT '巡检记录',
-		  state int COMMENT '值守状态',
+		  state TINYINT UNSIGNED COMMENT '值守状态',
 		  end_time datetime DEFAULT NULL COMMENT '值守完成时间',
-		  task_id int COMMENT '值守任务id',
+		  task_id MEDIUMINT UNSIGNED COMMENT '值守任务id',
 		  PRIMARY KEY (`id`)
 		) COMMENT='值守表';
 		]]>
 	</update>
-
-	<update id="createMonthTable">
-		RENAME TABLE watch TO watch_#{year}_#{month};
-	</update>
-
-	<update id="updateInspectTable">
-		INSERT INTO watch SELECT * FROM watch_#{year}_#{month} WHERE end_time is null;
-	</update>
-
-	<delete id="deleteMonthTable">
-		DELETE FROM watch_#{year}_#{month} WHERE end_time is null;
-	</delete>
 
 </mapper>

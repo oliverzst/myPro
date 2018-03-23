@@ -158,24 +158,20 @@
 	<update id="createTable">
 		<![CDATA[
 		CREATE TABLE IF NOT EXISTS trouble_shoot (
-		  id int AUTO_INCREMENT COMMENT '编号',
-		  inspect_id int COMMENT '对应巡检编号',
+		  id MEDIUMINT UNSIGNED AUTO_INCREMENT COMMENT '编号',
+		  inspect_id MEDIUMINT UNSIGNED COMMENT '对应巡检编号',
 		  facility_domain varchar(64) NOT NULL COMMENT '故障基站域名',
-		  user_id int COMMENT '处理人ID',
-		  module_id int COMMENT '模块ID',
-		  number int COMMENT '序号',
+		  user_id SMALLINT UNSIGNED COMMENT '处理人ID',
+		  module_id SMALLINT UNSIGNED COMMENT '模块ID',
+		  number TINYINT UNSIGNED COMMENT '序号',
 		  description varchar(512) DEFAULT NULL COMMENT '故障描述',
 		  process varchar(512) DEFAULT NULL COMMENT '故障处理记录',
 		  end_time datetime DEFAULT NULL COMMENT '故障处理时间',
-		  is_resolve int COMMENT '故障是否解决',
-		  inspect_device_type_id int COMMENT '故障基站设备类型',
+		  is_resolve TINYINT UNSIGNED COMMENT '故障是否解决',
+		  inspect_device_type_id SMALLINT UNSIGNED COMMENT '故障基站设备类型',
 		  PRIMARY KEY (`id`)
 		) COMMENT='故障处理记录表';
 		]]>
-	</update>
-
-	<update id="createMonthTable">
-		RENAME TABLE trouble_shoot TO trouble_shoot_#{year}_#{month};
 	</update>
 
 </mapper>

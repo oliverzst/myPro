@@ -106,19 +106,17 @@
 		WHERE a.inspect_by = #{userId} AND type = #{type} AND a.end_time is null
 	</select>
 
-	<select id="checkTaskExist" resultType="com.actec.bsms.entity.Task">
+	<select id="checkTaskExist" resultType="java.lang.Integer">
 		SELECT
-		<include refid="taskColumns"/>
+		COUNT(1)
 		FROM task a
-		<include refid="taskJoins"/>
 		WHERE a.task_name = #{taskName} AND description = #{description} AND facility_domain = #{facilityDomain} AND apply_by = #{applyBy} AND a.end_time is null
 	</select>
 
-	<select id="checkReceivedTaskExist" resultType="com.actec.bsms.entity.Task">
+	<select id="checkReceivedTaskExist" resultType="java.lang.Integer">
 		SELECT
-		<include refid="taskColumns"/>
+		COUNT(1)
 		FROM task a
-		<include refid="taskJoins"/>
 		WHERE a.task_name = #{taskName} AND description = #{description} AND facility_domain = #{facilityDomain} AND a.end_time is null AND a.state!=0
 	</select>
 
@@ -156,13 +154,12 @@
 		ORDER BY a.end_time desc LIMIT 10
 	</select>
 
-	<select id="findNewTask" resultType="com.actec.bsms.entity.Task">
+	<select id="findLastInsertTask" resultType="com.actec.bsms.entity.Task">
 		SELECT
 		<include refid="taskColumns"/>
 		FROM task a
 		<include refid="taskJoins"/>
-		WHERE a.end_time is null
-		ORDER BY a.id desc LIMIT 1
+		WHERE a.id = LAST_INSERT_ID()
 	</select>
 
 	<insert id="insert">
@@ -230,37 +227,25 @@
 	<update id="createTable">
 		<![CDATA[
 		CREATE TABLE IF NOT EXISTS task (
-		  id int AUTO_INCREMENT COMMENT '编号',
-		  task_name varchar(64) DEFAULT NULL COMMENT '任务名称',
+		  id MEDIUMINT UNSIGNED AUTO_INCREMENT COMMENT '编号',
+		  task_name varchar(64) NOT NULL COMMENT '任务名称',
 		  description varchar(100) DEFAULT NULL COMMENT '任务描述',
 		  facility_domain varchar(64) NOT NULL COMMENT '基站域名',
 		  release_time datetime NOT NULL COMMENT '任务创建时间',
-		  release_by int COMMENT '任务创建人',
+		  release_by SMALLINT UNSIGNED COMMENT '任务创建人',
 		  inspect_time datetime DEFAULT NULL COMMENT '任务执行时间',
-		  inspect_by int COMMENT '任务执行人',
-		  type int COMMENT '任务类型',
-		  state int COMMENT '任务状态',
+		  inspect_by SMALLINT UNSIGNED COMMENT '任务执行人',
+		  type TINYINT UNSIGNED COMMENT '任务类型',
+		  state TINYINT COMMENT '任务状态',
 		  sign_in_time datetime DEFAULT NULL COMMENT '任务签到时间',
 		  inspect_records varchar(20000) DEFAULT NULL COMMENT '任务记录',
 		  end_time datetime DEFAULT NULL COMMENT '任务完成时间',
-		  apply_by int COMMENT '任务指定人',
+		  apply_by SMALLINT UNSIGNED COMMENT '任务指定人',
 		  submit_time datetime DEFAULT NULL COMMENT '任务提交时间',
-		  inspect_device_type_id int COMMENT '指定巡检设备类型',
+		  inspect_device_type_id SMALLINT UNSIGNED COMMENT '指定巡检设备类型',
 		  PRIMARY KEY (`id`)
 		) COMMENT='任务表';
 		]]>
 	</update>
-
-	<update id="createMonthTable">
-		RENAME TABLE task TO task_#{year}_#{month};
-	</update>
-
-	<update id="updateTaskTable">
-		INSERT INTO task SELECT * FROM task_#{year}_#{month} WHERE end_time is null;
-	</update>
-
-	<delete id="deleteMonthTable">
-		DELETE FROM task_#{year}_#{month} WHERE end_time is null;
-	</delete>
 
 </mapper>

@@ -15,7 +15,7 @@ import javax.ws.rs.core.MediaType;
 import java.util.List;
 
 /**
- * 目录操作接口
+ * 模块接口
  *
  * @author zhangst
  * @create 2017-11-28 5:34 PM
@@ -71,11 +71,7 @@ public class ModuleController extends BaseController {
             if (null!=inputType) {
                 module.setInputType(inputType);
             }
-            moduleService.save(module);
-            if (moduleId==0) {
-                Module moduleNew = moduleService.findLast();
-                moduleService.insertInspectDeviceModule(moduleNew.getId(), inspectDeviceTypeId);
-            }
+            moduleService.save(module, inspectDeviceTypeId);
             return JSON.toJSONString(successResult);
         } catch (Exception e) {
             logger.error(e.getMessage());

@@ -94,6 +94,14 @@
         WHERE a.id = #{id}
     </select>
 
+	<select id="findByIdByTableName" resultMap="InspectResult">
+		SELECT
+		<include refid="inspectColumns"/>
+		FROM ${tableName} a
+		<include refid="inspectJoins"/>
+		WHERE a.id = #{id} and a.end_time is not null
+	</select>
+
 	<select id="findAllList" resultMap="InspectResultSimple">
 		SELECT
 			<include refid="inspectColumns"/>
@@ -241,32 +249,20 @@
 	<update id="createTable">
 		<![CDATA[
 		CREATE TABLE IF NOT EXISTS inspect (
-		  id int AUTO_INCREMENT COMMENT '编号',
+		  id MEDIUMINT UNSIGNED AUTO_INCREMENT COMMENT '编号',
 		  facility_domain varchar(64) NOT NULL COMMENT '巡检设备',
 		  inspect_time datetime DEFAULT NULL COMMENT '巡检时间',
-		  inspect_by int COMMENT '巡检人',
-		  inspect_type int COMMENT '巡检类型',
-		  state int COMMENT '巡检状态',
+		  inspect_by SMALLINT UNSIGNED COMMENT '巡检人',
+		  inspect_type TINYINT UNSIGNED COMMENT '巡检类型',
+		  state TINYINT UNSIGNED COMMENT '巡检状态',
 		  inspect_records varchar(10000) DEFAULT NULL COMMENT '巡检记录',
 		  trouble_shoot_info mediumblob COMMENT '故障记录',
 		  end_time datetime DEFAULT NULL COMMENT '巡检完成时间',
 		  task_ids varchar(1024) DEFAULT NULL COMMENT '巡检任务',
-		  inspect_device_type_id int COMMENT '巡检设备类型id',
+		  inspect_device_type_id SMALLINT UNSIGNED COMMENT '巡检设备类型id',
 		  PRIMARY KEY (`id`)
 		) COMMENT='巡检表';
 		]]>
 	</update>
-
-	<update id="createMonthTable">
-		RENAME TABLE inspect TO inspect_#{year}_#{month};
-	</update>
-
-	<update id="updateInspectTable">
-		INSERT INTO inspect SELECT * FROM inspect_#{year}_#{month} WHERE end_time is null;
-	</update>
-
-	<delete id="deleteMonthTable">
-		DELETE FROM inspect_#{year}_#{month} WHERE end_time is null;
-	</delete>
 
 </mapper>

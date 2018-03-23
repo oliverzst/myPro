@@ -17,6 +17,11 @@ import java.util.List;
 public class User extends DataEntity<User> implements Serializable{
 
 	private static final long serialVersionUID = 1L;
+
+	public static int ADMIN = 1;
+	public static int MANAGER = 2;
+	public static int NORMAL = 3;
+
 	private String loginName;// 登录名
 	private String password;// 密码
 	private String name;	// 姓名

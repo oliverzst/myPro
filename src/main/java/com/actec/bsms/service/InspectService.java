@@ -5,17 +5,21 @@ import com.actec.bsms.entity.Inspect;
 import com.actec.bsms.entity.Task;
 import com.actec.bsms.entity.Watch;
 import com.actec.bsms.repository.dao.InspectDao;
+import com.actec.bsms.repository.dao.TableDao;
 import com.actec.bsms.repository.dao.TaskDao;
 import com.actec.bsms.utils.DateUtils;
 import com.actec.bsms.utils.StringUtils;
 import com.actec.bsms.utils.TableCache;
-import com.actec.bsms.utils.excel.ExportExcel;
+import com.actec.bsms.common.excel.ExportExcel;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.TypeReference;
 import com.google.common.collect.Lists;
 import org.apache.poi.ss.usermodel.Row;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.servlet.http.HttpServletResponse;
 import java.text.SimpleDateFormat;
@@ -37,6 +41,10 @@ public class InspectService {
     InspectDao inspectDao;
     @Autowired
     TaskDao taskDao;
+    @Autowired
+    TableDao tableDao;
+
+    private static String tableName = "inspect";
 
     public Inspect get(int id){
         return inspectDao.get(id);
@@ -58,6 +66,17 @@ public class InspectService {
         }
     }
 
+    @Transactional(propagation = Propagation.REQUIRED,isolation = Isolation.DEFAULT,timeout=36000,rollbackFor=Exception.class)
+    public void createMonthTable(int year, int month) {
+        //将当前task表另存为上月task月表
+        tableDao.createMonthTable(tableName, year, month);
+        //新建一张task表
+        inspectDao.createTable();
+        //将未完成任务迁移到新task表
+        tableDao.updateMonthTable(tableName, year, month);
+        tableDao.deleteMonthTable(tableName, year, month);
+    }
+
     public List<Inspect> findAllHistory() {
         List<Inspect> inspectList = Lists.newArrayList();
         List<String> tableNames = findTables();
@@ -69,6 +88,17 @@ public class InspectService {
 
     public Inspect findById(int id) {
         return inspectDao.findById(id);
+    }
+
+    public Inspect findByIdByTableName(int id) {
+        List<String> tableNames = findTables();
+        for (int i=tableNames.size();i>0;i--) {
+            Inspect inspect = inspectDao.findByIdByTableName(id, tableNames.get(i-1));
+            if (null!=inspect) {
+                return inspect;
+            }
+        }
+        return null;
     }
 
     public List<Inspect> findHistoryInspectByFacilityDomain(String facilityDomain) {
@@ -221,7 +251,7 @@ public class InspectService {
         }
         ExportExcel excel = new ExportExcel(null, headersSel);
         SimpleDateFormat sdf=new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        if (inspectList!=null) {
+        if (inspectList!=null) { //巡检
             for (int i=0;i<inspectList.size();i++) {
                 Inspect inspect = inspectDao.get(inspectList.get(i).getId());
                 Row row = excel.addRow();
@@ -249,7 +279,7 @@ public class InspectService {
                 }
             }
         }
-        if (watchList!=null) {
+        if (watchList!=null) {//值守
             for (int i=0;i<watchList.size();i++) {
                 Row row = excel.addRow();
                 int k = 0;

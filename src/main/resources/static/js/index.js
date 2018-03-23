@@ -2860,7 +2860,7 @@ var vm = new Vue({
 		},
 		// 获取用户巡检设备类型
 		getUserInspectDeviceType: function(){
-			var url = "http://" + vm.IPstorage + ":8168/rs/user/getUserInspectDeviceType";
+			var url = "http://" + vm.IPstorage + ":8188/rs/user/getUserInspectDeviceType";
 			var param = {
 				userId: vm.user.userId,
 			}
@@ -2873,7 +2873,7 @@ var vm = new Vue({
 		},
 		// 获取单个巡检设备类型的详情
 		getInspectDeviceTypeDetail: function(){
-			var url = "http://" + vm.IPstorage + ":8168/rs/inspectDeviceType/getInspectDeviceType";
+			var url = "http://" + vm.IPstorage + ":8188/rs/inspectDeviceType/getInspectDeviceType";
 			var param = {
 				id: vm.currentInspectType.id,
 			}
@@ -2898,7 +2898,7 @@ var vm = new Vue({
 		},
 		//获取用户当前巡检基站可提交的任务列表
 		getSubmitTasks: function(){
-			var url = "http://" + vm.IPstorage + ":8168/rs/task/getSubmitTasks";
+			var url = "http://" + vm.IPstorage + ":8188/rs/task/getSubmitTasks";
 			var param = {
 				userId: vm.user.userId,
 				facilityDomain: vm.currentFacility.domain,
@@ -3444,7 +3444,7 @@ var vm = new Vue({
 		// 初始化任务websokcet
 		initTaskWebSocket: function(){
 			var url = window.location.host + window.location.pathname;
-			var wsUrl = "ws://"+ vm.IPstorage +":8168/";
+			var wsUrl = "ws://"+ vm.IPstorage +":8188/";
 			var user = vm.user;
 			var user_str = JSON.stringify(user);
 			if(vm.taskSocket&& vm.taskSocket.close){
@@ -3458,7 +3458,7 @@ var vm = new Vue({
 		// 初始化告警websokcet
 		initAlarmWebSocket: function(){
 			var url = window.location.host + window.location.pathname;
-			var wsUrl = "ws://"+ vm.IPstorage +":8168/";
+			var wsUrl = "ws://"+ vm.IPstorage +":8188/";
 			var user = vm.user;
 			var user_str = JSON.stringify(user);
 			if(vm.alarmSocket&& vm.alarmSocket.close){
@@ -3850,35 +3850,35 @@ var vm = new Vue({
 				},1500)
 			}else{
 				//console.log("IPstorage",vm.IPstorage);
-				vm.taskUrlPrefix= "http://" + vm.IPstorage + ":8168/rs/task";
-				vm.logHttp= "http://" + vm.IPstorage + ":8168/rs/task/getUserTaskHistory";
-				vm.userHttp= "http://" + vm.IPstorage + ":8168/rs/user/findUserList";
-				vm.roleHttp= "http://" + vm.IPstorage + ":8168/rs/user/setUserRoles";
-				vm.deviceGroupHttp="http://" + vm.IPstorage + ":8168/rs/facilityGroup/getFacilityGroup";
-				vm.deviceHttp="http://" + vm.IPstorage + ":8168/rs/facilityGroup/getAllFacility";
-				vm.setDeviceHttp="http://" + vm.IPstorage + ":8168/rs/facilityGroup/setFacilityGroup";
-				vm.setDeviceGroupHttp="http://" + vm.IPstorage + ":8168/rs/user/setUserFacility";
-				vm.delDeviceGroupHttp="http://" + vm.IPstorage + ":8168/rs/facilityGroup/delFacilityGroup";
-				vm.modifyPsdHttp="http://" + vm.IPstorage + ":8168/rs/user/modifyPassword";
-				vm.deviceTypeHttp="http://" + vm.IPstorage + ":8168/rs/inspectDeviceType/getInspectDeviceTypeList";
-				vm.setDeviceTypeHttp="http://" + vm.IPstorage + ":8168/rs/user/setUserInspectDeviceType";
-				vm.getDeviceTypeListHttp="http://" + vm.IPstorage + ":8168/rs/inspectDeviceType/getInspectDeviceTypeList";
-				vm.addFacilityTypeHttp="http://" + vm.IPstorage + ":8168/rs/inspectDeviceType/setInspectDeviceType";
-				vm.delFacilityTypeHttp="http://" + vm.IPstorage + ":8168/rs/inspectDeviceType/deleteInspectDeviceType";
-				vm.getTypeMenuListHttp="http://" + vm.IPstorage + ":8168/rs/menu/getMenuList";
-				vm.getTypeModuleListHttp="http://" + vm.IPstorage + ":8168/rs/module/getModuleList";
-				vm.addFacilityTypeMenuHttp="http://" + vm.IPstorage + ":8168/rs/menu/setMenu";
-				vm.delFacilityTypeMenuHttp="http://" + vm.IPstorage + ":8168/rs/menu/deleteMenu";
-				vm.addFacilityTypeModuleHttp="http://" + vm.IPstorage + ":8168/rs/module/setModule";
-				vm.delFacilityTypeModuleHttp="http://" + vm.IPstorage + ":8168/rs/module/deleteModule";
-				vm.watchHttp="http://" + vm.IPstorage + ":8168/rs/task/getUserWatchHistory";
-				vm.exportByUserHttp="http://" + vm.IPstorage + ":8168/rs/task/exportInspectExcelByUser";
-				vm.getUserChartsHttp="http://" + vm.IPstorage + ":8168/rs/statistics/statisticsByUser";
-				vm.getDeviceChartsHttp="http://" + vm.IPstorage + ":8168/rs/statistics/statisticsByDevice";
-				vm.getHistoryDeviceList="http://" + vm.IPstorage + ":8168/rs/statistics/getFacilityMap";
-				vm.getMyChartsHttp="http://" + vm.IPstorage + ":8168/rs/statistics/statisticsByUserAndFacility";
-				vm.resetUserPsdHttp="http://" + vm.IPstorage + ":8168/rs/user/resetPassword";
-				vm.logoutHttp="http://" + vm.IPstorage + ":8168/rs/user/logout";
+				vm.taskUrlPrefix= "http://" + vm.IPstorage + ":8188/rs/task";
+				vm.logHttp= "http://" + vm.IPstorage + ":8188/rs/task/getUserTaskHistory";
+				vm.userHttp= "http://" + vm.IPstorage + ":8188/rs/user/findUserList";
+				vm.roleHttp= "http://" + vm.IPstorage + ":8188/rs/user/setUserRoles";
+				vm.deviceGroupHttp="http://" + vm.IPstorage + ":8188/rs/facilityGroup/getFacilityGroup";
+				vm.deviceHttp="http://" + vm.IPstorage + ":8188/rs/facilityGroup/getAllFacility";
+				vm.setDeviceHttp="http://" + vm.IPstorage + ":8188/rs/facilityGroup/setFacilityGroup";
+				vm.setDeviceGroupHttp="http://" + vm.IPstorage + ":8188/rs/user/setUserFacility";
+				vm.delDeviceGroupHttp="http://" + vm.IPstorage + ":8188/rs/facilityGroup/delFacilityGroup";
+				vm.modifyPsdHttp="http://" + vm.IPstorage + ":8188/rs/user/modifyPassword";
+				vm.deviceTypeHttp="http://" + vm.IPstorage + ":8188/rs/inspectDeviceType/getInspectDeviceTypeList";
+				vm.setDeviceTypeHttp="http://" + vm.IPstorage + ":8188/rs/user/setUserInspectDeviceType";
+				vm.getDeviceTypeListHttp="http://" + vm.IPstorage + ":8188/rs/inspectDeviceType/getInspectDeviceTypeList";
+				vm.addFacilityTypeHttp="http://" + vm.IPstorage + ":8188/rs/inspectDeviceType/setInspectDeviceType";
+				vm.delFacilityTypeHttp="http://" + vm.IPstorage + ":8188/rs/inspectDeviceType/deleteInspectDeviceType";
+				vm.getTypeMenuListHttp="http://" + vm.IPstorage + ":8188/rs/menu/getMenuList";
+				vm.getTypeModuleListHttp="http://" + vm.IPstorage + ":8188/rs/module/getModuleList";
+				vm.addFacilityTypeMenuHttp="http://" + vm.IPstorage + ":8188/rs/menu/setMenu";
+				vm.delFacilityTypeMenuHttp="http://" + vm.IPstorage + ":8188/rs/menu/deleteMenu";
+				vm.addFacilityTypeModuleHttp="http://" + vm.IPstorage + ":8188/rs/module/setModule";
+				vm.delFacilityTypeModuleHttp="http://" + vm.IPstorage + ":8188/rs/module/deleteModule";
+				vm.watchHttp="http://" + vm.IPstorage + ":8188/rs/task/getUserWatchHistory";
+				vm.exportByUserHttp="http://" + vm.IPstorage + ":8188/rs/task/exportInspectExcelByUser";
+				vm.getUserChartsHttp="http://" + vm.IPstorage + ":8188/rs/statistics/statisticsByUser";
+				vm.getDeviceChartsHttp="http://" + vm.IPstorage + ":8188/rs/statistics/statisticsByDevice";
+				vm.getHistoryDeviceList="http://" + vm.IPstorage + ":8188/rs/statistics/getFacilityMap";
+				vm.getMyChartsHttp="http://" + vm.IPstorage + ":8188/rs/statistics/statisticsByUserAndFacility";
+				vm.resetUserPsdHttp="http://" + vm.IPstorage + ":8188/rs/user/resetPassword";
+				vm.logoutHttp="http://" + vm.IPstorage + ":8188/rs/user/logout";
 			}
 			//取得存于本地的用户登录信息
 			vm.UserStorage = JSON.parse(localStorage.getItem("usermassage"));

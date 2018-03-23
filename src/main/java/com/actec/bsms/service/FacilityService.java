@@ -1,13 +1,20 @@
 package com.actec.bsms.service;
 
 import com.actec.bsms.entity.Facility;
+import com.actec.bsms.entity.FacilityGroup;
+import com.actec.bsms.entity.RcuInfo;
 import com.actec.bsms.repository.dao.FacilityDao;
 import com.actec.bsms.repository.dao.InspectDao;
 import com.actec.bsms.repository.dao.UserDao;
 import com.actec.bsms.service.cache.FacilityGroupCache;
 import com.actec.bsms.utils.StringUtils;
+import com.actec.bsms.utils.FacilityUtils;
+import com.google.common.collect.Lists;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -23,6 +30,8 @@ public class FacilityService {
     @Autowired
     FacilityDao facilityDao;
     @Autowired
+    FacilityGroupService facilityGroupService;
+    @Autowired
     FacilityGroupCache facilityGroupCache;
     @Autowired
     InspectDao inspectDao;
@@ -34,6 +43,7 @@ public class FacilityService {
         return facilityDao.get(id);
     }
 
+    @Transactional(propagation = Propagation.REQUIRED,isolation = Isolation.DEFAULT,timeout=36000,rollbackFor=Exception.class)
     public void save(Facility facility) {
         if (null!=facility) {
             if (facility.getId()==0) {
@@ -48,10 +58,36 @@ public class FacilityService {
 
     public List<Facility> findAll() { return facilityDao.findAll(); }
 
+    @Transactional(propagation = Propagation.REQUIRED,isolation = Isolation.DEFAULT,timeout=36000,rollbackFor=Exception.class)
     public void delete(int id){
-        facilityDao.delete(id);
         facilityDao.deleteFacilityGroup(get(id).getDomain());
+        facilityDao.delete(id);
         facilityGroupCache.deleteFacility(id);
+    }
+
+    @Transactional(propagation = Propagation.REQUIRED,isolation = Isolation.DEFAULT,timeout=36000,rollbackFor=Exception.class)
+    public void updateFacilitys(List<RcuInfo> rcuInfoList) {
+        List<String> facDomainList = Lists.newArrayList();
+        for (int i=0;i<rcuInfoList.size();i++) {
+            RcuInfo rcuInfo = rcuInfoList.get(i);
+            Facility facility = findByDomain(rcuInfo.getDomain_name());
+            if (null==facility) {
+                facility = new Facility();
+            }
+            facility = FacilityUtils.rcuInfoToFacility(rcuInfo, facility);
+            save(facility);
+            facDomainList.add(rcuInfo.getDomain_name());
+        }
+        List<Facility> facilityList = findAll();
+        for (int j=0;j<facilityList.size();j++) {
+            if (!facDomainList.contains(facilityList.get(j).getDomain())) {
+                delete(facilityList.get(j).getId());
+            }
+        }
+        //更新全基站设备组信息
+        FacilityGroup facilityGroup = facilityGroupService.get(FacilityGroup.ALL_FACILITY, true);
+        facilityGroup.setFacilityList(findAll());
+        facilityGroupService.updateFacilityGroup(facilityGroup);
     }
 
     public Facility findByDomain(String domain) {

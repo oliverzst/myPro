@@ -6,6 +6,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 
 import javax.annotation.Resource;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -38,6 +39,19 @@ public abstract class IRedisService<T> {
      */
     public void put(String key, T doamin, long expire) {
         hashOperations.put(getRedisKey(), key, doamin);
+        if (expire != -1) {
+            redisTemplate.expire(getRedisKey(), expire, TimeUnit.SECONDS);
+        }
+    }
+
+    /**
+     * 批量添加
+     *
+     * @param map 对象
+     * @param expire 过期时间(单位:秒),传入 -1 时表示不设置过期时间
+     */
+    public void putAll(Map<String,T> map, long expire) {
+        hashOperations.putAll(getRedisKey(), map);
         if (expire != -1) {
             redisTemplate.expire(getRedisKey(), expire, TimeUnit.SECONDS);
         }

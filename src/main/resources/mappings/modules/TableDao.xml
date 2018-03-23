@@ -41,6 +41,7 @@
 	</select>
 
 	<update id="addVarCharColumn">
+ALTER TABLE TABLE_NAME ADD COLUMN_NAME TYPE
 		ALTER TABLE ${tableName} ADD ${columnName} VARCHAR(255);
 	</update>
 
@@ -56,5 +57,17 @@
 	<update id="addDateColumn">
 		ALTER TABLE `${tableName}` ADD ${columnName} datetime DEFAULT NULL;
 	</update>
+
+	<update id="createMonthTable">
+		RENAME TABLE #{tableName} TO #{tableName}_#{year}_#{month};
+	</update>
+
+	<update id="updateMonthTable">
+		INSERT INTO #{tableName} SELECT * FROM #{tableName}_#{year}_#{month} WHERE end_time is null;
+	</update>
+
+	<delete id="deleteMonthTable">
+		DELETE FROM #{tableName}_#{year}_#{month} WHERE end_time is null;
+	</delete>
 
 </mapper>

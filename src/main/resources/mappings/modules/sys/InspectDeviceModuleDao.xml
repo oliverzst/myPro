@@ -6,8 +6,8 @@
 	<update id="createTable">
 		<![CDATA[
 		CREATE TABLE IF NOT EXISTS inspect_device_module (
-		  inspect_device_type_id int COMMENT '巡检设备类型编号',
-		  module_id int COMMENT '目录编号'
+		  inspect_device_type_id SMALLINT UNSIGNED COMMENT '巡检设备类型编号',
+		  module_id SMALLINT UNSIGNED COMMENT '目录编号'
 		) COMMENT='巡检设备类型目录关联表';
 		]]>
 	</update>

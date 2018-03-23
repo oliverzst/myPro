@@ -1,7 +1,6 @@
 
 package com.actec.bsms.webscoket;
 
-import com.actec.bsms.entity.User;
 import com.actec.bsms.utils.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,17 +21,18 @@ import java.util.regex.Pattern;
 public abstract class BaseWebsocket {
     private static Logger logger = LoggerFactory.getLogger(BaseWebsocket.class);
 
-    protected Long getSleepDuration() {
-        return 1L;
-    }
+    private Long sleepDuration = 1L;
 
+    protected Long getSleepDuration() {
+        return sleepDuration;
+    }
 
     private String requestMsg = "";
 
     /*map键值对，key设置成String，有时候切换页面，上一页面webscoket线程关不掉*/
     private static final Map<Session, WebSocketRunnable> map = new HashMap<>();
 
-    protected abstract String getMessage(String messageFromClient, User user);
+    protected abstract String getMessage(String messageFromClient, Session session);
 
     private ScheduledExecutorService threadPool = Executors.newSingleThreadScheduledExecutor();
 
@@ -86,7 +86,7 @@ public abstract class BaseWebsocket {
                 if (session.isOpen() && StringUtils.isNotEmpty(requestMsg)) {
 //                    String userId = session.getUserPrincipal().toString();
 //                    User currentUser = UserUtils.get(Integer.getInteger(userId));
-                    responseMsg = getMessage(requestMsg, null);
+                    responseMsg = getMessage(requestMsg, session);
                     if (!prevRespMsg.equals(responseMsg)) {
                         session.getBasicRemote().sendText(responseMsg);
                         prevRespMsg = responseMsg;

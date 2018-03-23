@@ -12,7 +12,4 @@ public class Constant {
     public static final String PUT = "PUT";
     public static final String POST = "POST";
 
-    // 缓存用户最后有效的登陆sessionId
-    public static final String keeponeCacheName = "shiro-keepone-session";
-
 }

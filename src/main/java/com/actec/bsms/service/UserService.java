@@ -4,9 +4,13 @@ import com.actec.bsms.entity.User;
 import com.actec.bsms.repository.dao.UserDao;
 import com.actec.bsms.service.cache.UserCache;
 import com.actec.bsms.utils.DateUtils;
-import com.actec.bsms.utils.user.UserUtils;
+import com.actec.bsms.utils.UserUtils;
+import org.apache.commons.collections.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -21,6 +25,11 @@ public class UserService {
     @Autowired
     private UserCache userCache;
 
+    public User get(int id){
+        User user = userDao.get(id);
+        return user;
+    }
+
     public User get(int id, boolean isFromSql){
         User user = userCache.get(""+id);
         if (isFromSql && null==user) {
@@ -31,9 +40,9 @@ public class UserService {
 
     public User findByDevice(String deviceId) { return userDao.findByDevice(deviceId); }
 
-    public List<User> findByLoginName(String loginName) { return userDao.findByLoginName(loginName); }
+    public User findByLoginName(String loginName) { return userDao.findByLoginName(loginName); }
 
-    public List<User> checkRegister(String loginName, String phone, String name) { return userDao.checkRegister(loginName, phone, name); }
+    public int checkRegister(String loginName, String phone, String name) { return userDao.checkRegister(loginName, phone, name); }
 
     public void updateLoginInfo(int id, String deviceId) {
         userDao.updateLoginInfo(id, deviceId, DateUtils.getNowDate());
@@ -42,22 +51,32 @@ public class UserService {
 
     public void modifyPassword(int id, String password) { userDao.modifyPassword(id, password);}
 
+    @Transactional(propagation = Propagation.REQUIRED,isolation = Isolation.DEFAULT,timeout=36000,rollbackFor=Exception.class)
     public void save(User user) {
         if (null!=user) {
             if (user.getId()==0) {
                 user.setCreateDate(DateUtils.getNowDate());
                 user.setUpdateDate(DateUtils.getNowDate());
                 userDao.insert(user);
-                User newUser = userDao.findNewUser();
-                userCache.put(""+newUser.getId(), newUser, -1);
+                User lastInsertUser = userDao.findLastInsertUser();
+                userCache.put(""+lastInsertUser.getId(), lastInsertUser, -1);
             } else {
                 user.setUpdateDate(DateUtils.getNowDate());
                 userDao.update(user);
-                userCache.put(""+user.getId(), user, -1);
+                userCache.put(""+user.getId(), get(user.getId()), -1);
             }
         }
     }
 
+    @Transactional(propagation = Propagation.REQUIRED,isolation = Isolation.DEFAULT,timeout=36000,rollbackFor=Exception.class)
+    public void batchUpdate(List<User> userList) {
+        if (!CollectionUtils.isEmpty(userList)) {
+            userDao.batchUpdate(userList);
+            userCache.putAllUsers(userList);
+        }
+    }
+
+    @Transactional(propagation = Propagation.REQUIRED,isolation = Isolation.DEFAULT,timeout=36000,rollbackFor=Exception.class)
     public void delete(int userId) {
         User user = userDao.get(userId);
         if (null!=user) {
@@ -71,7 +90,7 @@ public class UserService {
     }
 
     public void deleteInspectDeviceType(int inspectDeviceTypeId) {
-        List<User> userList = UserUtils.selectByInspectDeviceType(findByRoleId(2), inspectDeviceTypeId);
+        List<User> userList = UserUtils.selectByInspectDeviceType(findByRoleId(User.MANAGER), inspectDeviceTypeId);
         for (int i=0;i<userList.size();i++) {
             User user = userList.get(i);
             String inspectDeviceTypes = user.getInspectDeviceType();

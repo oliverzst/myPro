@@ -1,12 +1,16 @@
 package com.actec.bsms.service;
 
 import com.actec.bsms.entity.TroubleShoot;
+import com.actec.bsms.repository.dao.TableDao;
 import com.actec.bsms.repository.dao.TroubleShootDao;
 import com.actec.bsms.utils.DateUtils;
 import com.actec.bsms.utils.TableCache;
 import com.google.common.collect.Lists;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Calendar;
 import java.util.List;
@@ -22,6 +26,10 @@ public class TroubleShootService {
 
     @Autowired
     TroubleShootDao troubleShootDao;
+    @Autowired
+    TableDao tableDao;
+
+    private static String tableName = "trouble_shoot";
 
     public TroubleShoot get(int id){
         return troubleShootDao.get(id);
@@ -41,6 +49,14 @@ public class TroubleShootService {
         if (null!=troubleShoot) {
             troubleShootDao.delete(troubleShoot);
         }
+    }
+
+    @Transactional(propagation = Propagation.REQUIRED,isolation = Isolation.DEFAULT,timeout=36000,rollbackFor=Exception.class)
+    public void createMonthTable(int year, int month) {
+        //将当前task表另存为上月task月表
+        tableDao.createMonthTable(tableName, year, month);
+        //新建一张task表
+        troubleShootDao.createTable();
     }
 
     public List<TroubleShoot> findTroubleShootList(int userId, int moduleId, int inspectDeviceType, String facilityDomain,
@@ -70,6 +86,7 @@ public class TroubleShootService {
         return historyTroubleShootList;
     }
 
+    @Transactional(propagation = Propagation.REQUIRED,isolation = Isolation.DEFAULT,timeout=36000,rollbackFor=Exception.class)
     public void saveTroubleShoots(List<TroubleShoot> troubleShootList, String facilityDomain, int userId, int inspectDeviceType, int inspectId) {
         deleteByInspect(inspectId);
         for (int k=0;k<troubleShootList.size();k++) {

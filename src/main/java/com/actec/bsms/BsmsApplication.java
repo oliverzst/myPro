@@ -23,6 +23,7 @@ import org.springframework.http.converter.HttpMessageConverter;
 @ServletComponentScan(value = "com.actec.bsms")
 @ComponentScan
 public class BsmsApplication {
+
 	private static Logger logger = Logger.getLogger(BsmsApplication.class);
 
 	/**
@@ -35,7 +36,7 @@ public class BsmsApplication {
 	}
 
 	/**
-	 * Jersey
+	 * Jersey配置
 	 */
 	@Bean
 	public ServletRegistrationBean jerseyServlet() {
@@ -46,7 +47,7 @@ public class BsmsApplication {
 	}
 
 	/**
-	 * FastJson
+	 * FastJson配置
 	 */
 	@Bean
 	public HttpMessageConverters fastJsonConverters(){
@@ -59,5 +60,35 @@ public class BsmsApplication {
 		HttpMessageConverter<?> converter = fastJsonConverter;
 		return new HttpMessageConverters(converter);
 	}
+
+//	@Bean
+//	public EmbeddedServletContainerFactory servletContainer() {
+//
+//		TomcatEmbeddedServletContainerFactory tomcat = new TomcatEmbeddedServletContainerFactory() {
+//
+//			@Override
+//			protected void postProcessContext(Context context) {
+//
+//				SecurityConstraint securityConstraint = new SecurityConstraint();
+//				securityConstraint.setUserConstraint("CONFIDENTIAL");
+//				SecurityCollection collection = new SecurityCollection();
+//				collection.addPattern("/*");
+//				securityConstraint.addCollection(collection);
+//				context.addConstraint(securityConstraint);
+//			}
+//		};
+//		tomcat.addAdditionalTomcatConnectors(initiateHttpConnector());
+//		return tomcat;
+//	}
+//
+//	private Connector initiateHttpConnector() {
+//		//Http 8168端口请求重定向到Https 8188端口
+//		Connector connector = new Connector("org.apache.coyote.http11.Http11NioProtocol");
+//		connector.setScheme("http");
+//		connector.setPort(8168);
+//		connector.setSecure(false);
+//		connector.setRedirectPort(8188);
+//		return connector;
+//	}
 
 }

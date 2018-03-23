@@ -4,18 +4,23 @@ import com.actec.bsms.repository.dao.*;
 import com.actec.bsms.repository.socket.BaseStationSocket;
 import com.actec.bsms.repository.socket.RealtimeAlarmSocket;
 import com.actec.bsms.utils.ApplicationContextHelper;
-import com.actec.bsms.utils.Cache.InitCacheTask;
 import com.actec.bsms.utils.TableCache;
-import com.actec.bsms.utils.facility.FacilitySyncTask;
-import com.actec.bsms.utils.timer.SplitTableTimer;
 import io.vertx.core.Vertx;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.Timer;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+/**
+ * 启动类，项目启动时执行的方法
+ *
+ * @author zhangst
+ * @create 2017-12-04 10:53 AM
+ */
 public class ServiceManager {
 
     private static Logger logger = LoggerFactory.getLogger(ServiceManager.class);
@@ -54,18 +59,8 @@ public class ServiceManager {
     private static FacilityGroupDao facilityGroupDao = ApplicationContextHelper.getBean(FacilityGroupDao.class);
     private static AlarmRealTimeDao alarmRealTimeDao = ApplicationContextHelper.getBean(AlarmRealTimeDao.class);
 
-    private static volatile List<Task> allTasks = new ArrayList<>();
-
-    public static void contextDestroyed() {
-        for (Task task : allTasks) {
-            if (task != null) {
-                task.stopService();
-                task.cleanup();
-            }
-        }
-    }
-
     public static void contextInitialized() {
+        /** 数据库初始化 */
         checkToInitUserTable();
         checkToInitRoleTable();
         checkToInitMenuTable();
@@ -78,23 +73,28 @@ public class ServiceManager {
         checkToInitFacTable();
         checkToInitFacGroupTable();
 
+        /** 初始化基站数据处理线程 */
         startInitRunnable();
 
+        /** 初始化缓存 */
         initCacheRunnable();
 
+        /** 创建按月分表计时器 */
         createTaskTablePerMonth();
 
+        /** 初始化VertX */
         Vertx.vertx().deployVerticle(new BaseStationSocket());
         Vertx.vertx().deployVerticle(new RealtimeAlarmSocket());
     }
 
+    /** 设备同步任务线程 */
     private static void startInitRunnable() {
-        //处理会话订阅数据
         ExecutorService facilitySyncTaskThread = Executors.newSingleThreadExecutor();
         FacilitySyncTask facilitySyncTask = new FacilitySyncTask();
         facilitySyncTaskThread.execute(facilitySyncTask);
     }
 
+    /** 缓存初始化任务线程 */
     private static void initCacheRunnable() {
         //处理会话订阅数据
         ExecutorService initCacheThread = Executors.newSingleThreadExecutor();
@@ -314,16 +314,16 @@ public class ServiceManager {
         }
     }
 
+    /** 创建月表定时器线程 */
     private static void createTaskTablePerMonth() {
         Calendar calendar = Calendar.getInstance();
-        calendar.set(Calendar.HOUR_OF_DAY, 1); //凌晨1点
+        calendar.set(Calendar.HOUR_OF_DAY, 1); //凌晨1点首次执行计时器
         calendar.set(Calendar.MINUTE, 0);
         calendar.set(Calendar.SECOND, 0);
-        Date date=calendar.getTime(); //第一次执行定时任务的时间
+        Date date=calendar.getTime(); //首次执行定时任务的时间
         Timer timer = new Timer();
-        SplitTableTimer splitTableTimer = new SplitTableTimer();
         //安排指定的任务在指定的时间开始进行重复的固定延迟执行。
-        timer.scheduleAtFixedRate(splitTableTimer,date,PERIOD_DAY);
+        timer.scheduleAtFixedRate(SplitTableTimer.getInstance(),date,PERIOD_DAY);//每天执行一次
     }
 
 }

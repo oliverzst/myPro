@@ -14,19 +14,19 @@ public interface InspectDao extends CrudDao<Inspect> {
 
     void createTable();
 
-    void createMonthTable(@Param("year") int year, @Param("month") int month);
-
-    void updateInspectTable(@Param("year") int year, @Param("month") int month);
-
-    void deleteMonthTable(@Param("year") int year, @Param("month") int month);
-
-
     /**
      * 根据ID查询
      * @param
      * @return
      */
     Inspect findById(@Param("id") int id);
+
+    /**
+     * 根据ID查询历史
+     * @param
+     * @return
+     */
+    Inspect findByIdByTableName(@Param("id") int id, @Param("tableName") String tableName);
 
     /**
      * 查询所有历史巡检

@@ -4,9 +4,9 @@ import com.actec.bsms.entity.Facility;
 import com.actec.bsms.entity.Inspect;
 import com.actec.bsms.entity.User;
 import com.actec.bsms.entity.Watch;
-import com.actec.bsms.entity.vo.statistics.CountByUser;
-import com.actec.bsms.entity.vo.statistics.CountType;
-import com.actec.bsms.entity.vo.statistics.EveryDayOrMonth;
+import com.actec.bsms.vo.statistics.CountByUser;
+import com.actec.bsms.vo.statistics.CountType;
+import com.actec.bsms.vo.statistics.EveryDayOrMonth;
 import com.actec.bsms.repository.dao.FacilityDao;
 import com.actec.bsms.repository.dao.FacilityGroupDao;
 import com.actec.bsms.repository.dao.UserDao;
@@ -45,7 +45,8 @@ public class StatisticsService {
         if (StringUtils.isEmpty(monthString)) {
             monthString = "12,11,10,9,8,7,6,5,4,3,2,1";
         }
-        if (userId!=0) { //指定用户
+        //是否指定用户，若是，则对该用户进行统计
+        if (userId!=0) {
             SimpleDateFormat sdf=new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
             String[] years = yearString.split(",");
             String[] monthy = monthString.split(";");
@@ -62,7 +63,8 @@ public class StatisticsService {
             for (int y=0;y<years.length;y++) {
                 String year = years[y];
                 String[] months = monthy[y].split(",");
-                if (months.length==1 && years.length==1) { //只查询一个月时，需要按天统计
+                //只查询一个月时，需要按天统计
+                if (months.length==1 && years.length==1) {
                     String month = months[0];
                     Calendar cl=Calendar.getInstance();//实例化一个日历对象
                     cl.set(Calendar.YEAR, Integer.parseInt(year));//年设置
@@ -130,7 +132,8 @@ public class StatisticsService {
                         totalTimeRepair+=timeRepair;
                         totalTimeDuty+=timeDuty;
                     }
-                } else { //查询多个月时，按月统计
+                    //查询多个月时，按月统计
+                } else {
                     for (int i=0;i<months.length;i++) {
                         int countSelf=0;
                         int countTask=0;
@@ -242,25 +245,9 @@ public class StatisticsService {
             List<CountType> countUserList = Lists.newArrayList();
             for (int i=0;i<userList.size();i++) {
                 User user = userList.get(i);
-                String name = user.getName();
-                int count =0;
-                int time =0;
-                for (int j=0;j<inspectList.size();j++) {
-                    Inspect inspect = inspectList.get(j);
-                    if (inspect.getInspectBy()==user.getId()) {
-                        count++;
-                        time+=(int) ((inspect.getEndTime().getTime()-inspect.getInspectTime().getTime())/1000);
-                    }
-                }
-                for (int j=0;j<watchList.size();j++) {
-                    Watch watch = watchList.get(j);
-                    if (watch.getWatchBy()==user.getId()) {
-                        count++;
-                        time+=(int) ((watch.getEndTime().getTime()-watch.getWatchTime().getTime())/1000);
-                    }
-                }
-                if (count!=0) {
-                    countUserList.add(new CountType(name, count, time/count));
+                CountType countType = countByUser(user, inspectList, watchList);
+                if (null!=countType) {
+                    countUserList.add(countType);
                 }
             }
             return JSON.toJSONString(countUserList);
@@ -283,7 +270,8 @@ public class StatisticsService {
         return facilityDomainMap;
     }
 
-    public String statisticsByDevice(List<Inspect> inspectList, String yearString, String monthString, String facilityDomain) throws ParseException {
+    public String statisticsByDevice(List<Inspect> inspectList, String yearString, String monthString,
+                                     String facilityDomain) throws ParseException {
         Calendar now = Calendar.getInstance();
         if (StringUtils.isEmpty(yearString)) {
             yearString = String.valueOf(now.get(Calendar.YEAR));
@@ -405,18 +393,10 @@ public class StatisticsService {
             List<CountType> countUserList = Lists.newArrayList();
             List<User> userList = userDao.findAllList(new User());
             for (int u=0;u<userList.size();u++) {
-                int count=0;
-                long time=0;
                 User user = userList.get(u);
-                for (int j=0;j<inspectList.size();j++) {
-                    Inspect inspect = inspectList.get(j);
-                    if (inspect.getInspectBy()==user.getId()) {
-                        count++;
-                        time+=(int) ((inspect.getEndTime().getTime()-inspect.getInspectTime().getTime())/1000);
-                    }
-                }
-                if (count!=0) {
-                    countUserList.add(new CountType(user.getName(), count, time/count));
+                CountType countType = countByUser(user, inspectList, null);
+                if (null!=countType) {
+                    countUserList.add(countType);
                 }
             }
             countByUser.setTotalDevice(countUserList);
@@ -445,6 +425,33 @@ public class StatisticsService {
             return JSON.toJSONString(countUserList);
         }
 
+    }
+
+    private CountType countByUser(User user, List<Inspect> inspectList, List<Watch> watchList) {
+        int count =0;
+        int time =0;
+        if (null!=inspectList) {
+            for (int j=0;j<inspectList.size();j++) {
+                Inspect inspect = inspectList.get(j);
+                if (inspect.getInspectBy()==user.getId()) {
+                    count++;
+                    time+=(int) ((inspect.getEndTime().getTime()-inspect.getInspectTime().getTime())/1000);
+                }
+            }
+        }
+        if (null!=watchList) {
+            for (int j=0;j<watchList.size();j++) {
+                Watch watch = watchList.get(j);
+                if (watch.getWatchBy()==user.getId()) {
+                    count++;
+                    time+=(int) ((watch.getEndTime().getTime()-watch.getWatchTime().getTime())/1000);
+                }
+            }
+        }
+        if (count==0) {
+            return null;
+        }
+        return new CountType(user.getName(), count, time/count);
     }
 
 }

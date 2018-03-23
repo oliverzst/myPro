@@ -85,7 +85,7 @@ var LoginApp = new Vue({
                     'phone':phone
                 };
                 $.ajax({
-                    url:'http://'+ ipA +':8168/rs/user/register',
+                    url:'http://'+ ipA +':8188/rs/user/register',
                     type: "GET",
                     async: true,
                     data:{
@@ -142,7 +142,7 @@ var LoginApp = new Vue({
                 }
                 webToast("登陆中...",'middle',60000);
                 $.ajax({
-                    url:'http://'+ loginIpAdr +':8168/rs/user/login',
+                    url:'http://'+ loginIpAdr +':8188/rs/user/login',
                     type: "GET",
                     async: true,
                     data:{

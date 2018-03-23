@@ -88,15 +88,6 @@
 		<include refid="facilityJoins"/>
 		WHERE a.del_flag = 0 AND a.name = #{name}
 	</select>
-
-	<select id="findNewFacilityGroup" resultMap="facilityGroupResult">
-		SELECT
-		<include refid="facilityColumns"/>
-		FROM facility_group a
-		<include refid="facilityJoins"/>
-		WHERE a.del_flag = 0
-		ORDER BY a.id desc LIMIT 1
-	</select>
 	
 	<!-- 插入 -->
 	<insert id="insert">
@@ -152,7 +143,7 @@
 	<update id="createTable">
 		<![CDATA[
 		CREATE TABLE IF NOT EXISTS facility_group (
-		  id int AUTO_INCREMENT COMMENT '编号',
+		  id TINYINT UNSIGNED AUTO_INCREMENT COMMENT '编号',
 		  name varchar(64) NOT NULL COMMENT '设备组名称',
 		  create_date datetime NOT NULL COMMENT '创建时间',
 		  update_date datetime NOT NULL COMMENT '更新时间',
@@ -173,7 +164,7 @@
 		<![CDATA[
 		CREATE TABLE IF NOT EXISTS facility_facility_group (
 		  facility_domain VARCHAR(64) COMMENT '设备编号',
-		  facility_group_id int COMMENT '设备组编号'
+		  facility_group_id TINYINT UNSIGNED COMMENT '设备组编号'
 		) COMMENT='设备设备组关联表';
 		]]>
 	</update>

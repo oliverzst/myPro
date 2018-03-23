@@ -4,10 +4,10 @@ import com.actec.bsms.entity.FacilityGroup;
 import com.actec.bsms.entity.InspectDeviceType;
 import com.actec.bsms.entity.User;
 import com.actec.bsms.service.InspectDeviceTypeService;
-import com.actec.bsms.service.SystemService;
 import com.actec.bsms.service.UserService;
+import com.actec.bsms.utils.CodeUtils;
 import com.actec.bsms.utils.StringUtils;
-import com.actec.bsms.utils.user.UserUtils;
+import com.actec.bsms.utils.UserUtils;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.TypeReference;
 import com.google.common.collect.Lists;
@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
+ * 用户管理相关接口
  * @author zhangst
  * @create 2017-11-02 5:06 PM
  */
@@ -36,6 +37,9 @@ public class UserController extends BaseController{
 
     private static String result = "";
 
+    /**
+     * 用户登录
+     */
     @GET
     @Path("/login")
     public String login(@QueryParam("loginInfo") String loginInfo) {
@@ -44,20 +48,22 @@ public class UserController extends BaseController{
         String password = loginInfoMap.get("password");
         String deviceId = null;
         try {
-            List<User> userList = userService.findByLoginName(loginName);
-            if (userList.size()==0) {
+            //查找登陆帐号或者手机号是否存在
+            User user = userService.findByLoginName(loginName);
+            if (null==user) {
                 result = "账号不存在";
                 return JSON.toJSONString(result);
             }
-            User user = userList.get(0);
-            if (SystemService.validatePassword(password, user.getPassword())) {
-                if (!user.getLoginName().equals("admin")) {
-                    if (!StringUtils.isEmpty(user.getLoginDevice())) {
-                        result = "该帐号已在别处登录";
-                        return JSON.toJSONString(result);
-                    }
-                    deviceId = "已登录";
-                }
+            //密码验证
+            if (CodeUtils.validatePassword(password, user.getPassword())) {
+                //重复登录验证
+//                if (!user.getLoginName().equals("admin")) {
+//                    if (!StringUtils.isEmpty(user.getLoginDevice())) {
+//                        result = "该帐号已在别处登录";
+//                        return JSON.toJSONString(result);
+//                    }
+//                    deviceId = "已登录";
+//                }
                 userService.updateLoginInfo(user.getId(), deviceId);
                 user = userService.get(user.getId(), true);
                 return JSON.toJSONString(user);
@@ -72,6 +78,9 @@ public class UserController extends BaseController{
         }
     }
 
+    /**
+     * 密码修改
+     */
     @GET
     @Path("/modifyPassword")
     public String modifyPassword(@QueryParam("userId") int userId, @QueryParam("oldPassword") String oldPassword, @QueryParam("newPassword") String newPassword) {
@@ -81,8 +90,8 @@ public class UserController extends BaseController{
                 result = "账号不存在";
                 return JSON.toJSONString(result);
             }
-            if (SystemService.validatePassword(oldPassword, user.getPassword())) {
-                userService.modifyPassword(userId, SystemService.entryptPassword(newPassword));
+            if (CodeUtils.validatePassword(oldPassword, user.getPassword())) {
+                userService.modifyPassword(userId, CodeUtils.entryptPassword(newPassword));
                 result = "密码修改成功";
                 return JSON.toJSONString(result);
             } else {
@@ -96,6 +105,9 @@ public class UserController extends BaseController{
         }
     }
 
+    /**
+     * 验证某设备是否已经登录
+     */
     @GET
     @Path("/isLogin/{deviceId}")
     public String isLogin(@PathParam("deviceId") String deviceId) {
@@ -103,6 +115,9 @@ public class UserController extends BaseController{
         return user==null?"":JSON.toJSONString(user);
     }
 
+    /**
+     * 用户注册
+     */
     @GET
     @Path("/register")
     public String register(@QueryParam("registerInfo") String regusterInfo) {
@@ -112,17 +127,18 @@ public class UserController extends BaseController{
         String name = regusterInfoMap.get("name");
         String phone = regusterInfoMap.get("phone");
         try {
-            List<User> userList = userService.checkRegister(loginName, phone, name);
-            if (userList.size()!=0) {
+            int isUserExits = userService.checkRegister(loginName, phone, name);
+            if (isUserExits!=0) {
                 result = "该登录名或手机号已存在";
                 return  JSON.toJSONString(result);
             }
             User user = new User();
             user.setLoginName(loginName);
-            user.setPassword(SystemService.entryptPassword(password));
+            user.setPassword(CodeUtils.entryptPassword(password));
             user.setName(name);
             user.setPhone(phone);
-            user.setRoleId(3);
+            //默认用户权限为普通用户
+            user.setRoleId(User.NORMAL);
             userService.save(user);
             result = "注册成功";
             return JSON.toJSONString(result);
@@ -133,6 +149,9 @@ public class UserController extends BaseController{
         }
     }
 
+    /**
+     * 修改用户信息
+     */
     @GET
     @Path("/modify")
     public String modify(@QueryParam("userInfo") String userInfo) {
@@ -142,8 +161,8 @@ public class UserController extends BaseController{
         String name = userInfoMap.get("name");
         String phone = userInfoMap.get("phone");
         try {
-            List<User> userList = userService.checkRegister(loginName, phone, name);
-            if (userList.size()!=0) {
+            int isUserExits = userService.checkRegister(loginName, phone, name);
+            if (isUserExits!=0) {
                 result = "该登录名或手机号已存在";
                 return  JSON.toJSONString(result);
             }
@@ -161,6 +180,9 @@ public class UserController extends BaseController{
         }
     }
 
+    /**
+     * 退出登录
+     */
     @GET
     @Path("/logout")
     public String logout(@QueryParam("userId")int userId) {
@@ -177,6 +199,9 @@ public class UserController extends BaseController{
         }
     }
 
+    /**
+     * 设置用户归属设备组
+     */
     @GET
     @Path("/setUserFacility")
     public String setUserFacility(@QueryParam("userId")int userId, @QueryParam("facilityGroupId")int facilityGroupId) {
@@ -193,6 +218,9 @@ public class UserController extends BaseController{
         }
     }
 
+    /**
+     * 设置用户权限级别
+     */
     @GET
     @Path("/setUserRole")
     public String setUserRole(@QueryParam("userId")int userId, @QueryParam("roleId")int roleId) {
@@ -209,13 +237,16 @@ public class UserController extends BaseController{
         }
     }
 
+    /**
+     * 重置密码
+     */
     @GET
     @Path("/resetPassword")
     public String resetPassword(@QueryParam("userId")int userId) {
         try {
             User user = userService.get(userId, true);
             //重置用户密码为12345678
-            user.setPassword(SystemService.entryptPassword("12345678"));
+            user.setPassword(CodeUtils.entryptPassword("12345678"));
             userService.save(user);
             result = "重置成功";
             return JSON.toJSONString(result);
@@ -226,11 +257,15 @@ public class UserController extends BaseController{
         }
     }
 
+    /**
+     * 批量设置用户权限
+     */
     @GET
     @Path("/setUserRoles")
     public String setUserRoles(@QueryParam("userLists")String userLists) {
         try {
             List<User> userList = JSON.parseArray(userLists, User.class);
+            List<User> updateUserList = Lists.newArrayList();
             for (int i=0;i<userList.size();i++) {
                 User user = userService.get(userList.get(i).getId(), true);
                 if (user.getRoleId() != userList.get(i).getRoleId()) {
@@ -245,9 +280,12 @@ public class UserController extends BaseController{
                         }
                         user.setInspectDeviceType(inspectDeviceType.substring(0, inspectDeviceType.length()-1));
                     }
-                    userService.save(user);
+                    updateUserList.add(user);
+//                    userService.save(user);
                 }
             }
+            //批量修改
+            userService.batchUpdate(updateUserList);
             result = "配置成功";
             return JSON.toJSONString(result);
         }catch (Exception e) {
@@ -257,6 +295,9 @@ public class UserController extends BaseController{
         }
     }
 
+    /**
+     * 设置用户所属巡检设备类型
+     */
     @GET
     @Path("/setUserInspectDeviceType")
     public String setUserInspectDeviceType(@QueryParam("userId")int userId, @QueryParam("inspectDeviceType")String inspectDeviceType) {
@@ -273,6 +314,9 @@ public class UserController extends BaseController{
         }
     }
 
+    /**
+     * 获取用户当前所属巡检设备类型
+     */
     @GET
     @Path("/getUserInspectDeviceType")
     public String getUserInspectDeviceType(@QueryParam("userId")int userId) {
@@ -294,6 +338,9 @@ public class UserController extends BaseController{
         }
     }
 
+    /**
+     * 查找具备指定巡检设备类型的普通用户（管理员功能）
+     */
     @GET
     @Path("/findUserByInspectDeviceType")
     public String findUserByInspectDeviceType(@QueryParam("userId")int userId, @QueryParam("inspectDeviceTypeId")int inspectDeviceTypeId) {
@@ -308,6 +355,9 @@ public class UserController extends BaseController{
         }
     }
 
+    /**
+     * 获取当前用户下级的所有用户信息
+     */
     @GET
     @Path("/findUserList")
     public String findUserList(@QueryParam("userId")int userId) {
@@ -341,6 +391,9 @@ public class UserController extends BaseController{
         }
     }
 
+    /**
+     * 获取指定用户信息
+     */
     @GET
     @Path("/get")
     public String get(@QueryParam("userId")int userId) {

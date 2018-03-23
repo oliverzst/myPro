@@ -1,6 +1,7 @@
 package com.actec.bsms.service;
 
 import com.actec.bsms.entity.Task;
+import com.actec.bsms.repository.dao.TableDao;
 import com.actec.bsms.repository.dao.TaskDao;
 import com.actec.bsms.service.cache.TaskCache;
 import com.actec.bsms.utils.DateUtils;
@@ -9,6 +10,9 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.TypeReference;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -28,38 +32,64 @@ public class TaskService {
     TaskDao taskDao;
 
     @Autowired
+    TableDao tableDao;
+
+    @Autowired
     TaskCache taskCache;
+
+    private static String tableName = "task";
 
     public Task get(int id){
         return taskDao.get(id);
     }
 
+    @Transactional(propagation = Propagation.REQUIRED,isolation = Isolation.DEFAULT,timeout=36000,rollbackFor=Exception.class)
     public void save(Task task) {
         if (null!=task) {
             if (task.getId()==0) {
                 taskDao.insert(task);
-                Task newTask = taskDao.findNewTask();
-                taskCache.put(""+newTask.getId(), newTask, -1);
+                Task lastInsertTask = taskDao.findLastInsertTask();
+                taskCache.put(""+lastInsertTask.getId(), lastInsertTask, -1);
             } else {
                 taskDao.update(task);
                 if (task.getState()==Task.FINISH) {
                     //已完成任务，从缓存中移除
                     taskCache.remove(""+task.getId());
                 } else {
-                    taskCache.put(""+task.getId(), task, -1);
+                    taskCache.put(""+task.getId(), get(task.getId()), -1);
                 }
             }
         }
     }
 
+    @Transactional(propagation = Propagation.REQUIRED,isolation = Isolation.DEFAULT,timeout=36000,rollbackFor=Exception.class)
     public void delete(Task task) {
         if (null!=task) {
             taskDao.delete(task);
+            taskCache.remove(""+task.getId());
         }
     }
 
+    @Transactional(propagation = Propagation.REQUIRED,isolation = Isolation.DEFAULT,timeout=36000,rollbackFor=Exception.class)
+    public void createMonthTable(int year, int month) {
+        //将当前task表另存为上月task月表
+        tableDao.createMonthTable(tableName, year, month);
+        //新建一张task表
+        taskDao.createTable();
+        //将未完成任务迁移到新task表
+        tableDao.updateMonthTable(tableName, year, month);
+        tableDao.deleteMonthTable(tableName, year, month);
+    }
+
     public List<Task> findInspectTaskByFacilityDomain(String facilityDomain) {
-        return taskDao.findByFacilityDomain(facilityDomain, 1);
+        return taskDao.findByFacilityDomain(facilityDomain, Task.INSPECT_TASK);
+    }
+
+    public List<Task> findAllTaskByFacilityDomainAndUserId(int userId, String facilityDomain, boolean isFromSql) {
+        List<Task> inspectTaskList = findInspectTaskByFacilityDomainAndUserId(userId, facilityDomain, isFromSql);
+        inspectTaskList.addAll(findRepairTaskByFacilityDomainAndUserId(userId, facilityDomain, isFromSql));
+        inspectTaskList.addAll(findDutyTaskByFacilityDomainAndUserId(userId, facilityDomain, isFromSql));
+        return inspectTaskList;
     }
 
     public List<Task> findInspectTaskByFacilityDomainAndUserId(int userId, String facilityDomain, boolean isFromSql) {
@@ -108,10 +138,11 @@ public class TaskService {
         return taskDao.findByInspectBy(userId, Task.DUTY_TASK);
     }
 
-    public List<Task> checkTaskExist(String taskName, String description, String facilityDomain, int applyBy) {
+    public int checkTaskExist(String taskName, String description, String facilityDomain, int applyBy) {
         return taskDao.checkTaskExist(taskName, description, facilityDomain, applyBy);
     }
 
+    @Transactional(propagation = Propagation.REQUIRED,isolation = Isolation.DEFAULT,timeout=36000,rollbackFor=Exception.class)
     public void deleteTask(int taskId) {
         taskDao.deleteTask(taskId);
         taskCache.remove(""+taskId);
@@ -153,8 +184,8 @@ public class TaskService {
             for (int i=0; i<facilityDomain.length; i++) {
                 if (null!=inspectBys) {
                     for (int j=0; j<inspectBys.length; j++) {
-                        List<Task> taskList = taskDao.checkTaskExist(taskName, description, facilityDomain[i], Integer.parseInt(inspectBys[j]));
-                        if (taskList.size()==0) {
+                        int isTaskExit = taskDao.checkTaskExist(taskName, description, facilityDomain[i], Integer.parseInt(inspectBys[j]));
+                        if (isTaskExit==0) {
                             Task newTask = new Task(taskName,description,facilityDomain[i], DateUtils.getNowDate(),userId,DateUtils.getNowDate(),Integer.parseInt(inspectBys[j]), taskType);
                             newTask.setInspectDeviceTypeId(inspectDeviceTypeId);
 //                            newTask.setState(Task.RECEIVE);
@@ -164,8 +195,8 @@ public class TaskService {
                         }
                     }
                 } else {
-                    List<Task> taskList = taskDao.checkTaskExist(taskName, description, facilityDomain[i], 0);
-                    if (taskList.size()==0) {
+                    int isTaskExit = taskDao.checkTaskExist(taskName, description, facilityDomain[i], 0);
+                    if (isTaskExit==0) {
                         Task newTask = new Task(taskName,description,facilityDomain[i],DateUtils.getNowDate(),userId,DateUtils.getNowDate(),0, taskType);
                         newTask.setInspectDeviceTypeId(inspectDeviceTypeId);
                         save(newTask);
@@ -184,8 +215,8 @@ public class TaskService {
                     for (int i=0; i<facilityDomain.length; i++) {
                         if (null!=inspectBys) {
                             for (int j=0; j<inspectBys.length; j++) {
-                                List<Task> taskList = taskDao.checkTaskExist(taskName, description, facilityDomain[i], Integer.parseInt(inspectBys[j]));
-                                if (taskList.size()==0) {
+                                int isTaskExit = taskDao.checkTaskExist(taskName, description, facilityDomain[i], Integer.parseInt(inspectBys[j]));
+                                if (isTaskExit==0) {
                                     Task newTask = new Task(taskName,description,facilityDomain[i],DateUtils.getNowDate(),userId,inspectTime,Integer.parseInt(inspectBys[j]), taskType);
 //                                    newTask.setState(Task.RECEIVE);
                                     newTask.setApplyBy(Integer.parseInt(inspectBys[j]));
@@ -194,8 +225,8 @@ public class TaskService {
                                 }
                             }
                         } else {
-                            List<Task> taskList = taskDao.checkTaskExist(taskName, description, facilityDomain[i], 0);
-                            if (taskList.size()==0) {
+                            int isTaskExit = taskDao.checkTaskExist(taskName, description, facilityDomain[i], 0);
+                            if (isTaskExit==0) {
                                 Task newTask = new Task(taskName,description,facilityDomain[i],DateUtils.getNowDate(),userId,inspectTime,0, taskType);
                                 save(newTask);
                                 result = "success";
@@ -205,8 +236,8 @@ public class TaskService {
                 } else {
                     if (null!=inspectBys) {
                         for (int j=0; j<inspectBys.length; j++) {
-                            List<Task> taskList = taskDao.checkTaskExist(taskName, description, "", Integer.parseInt(inspectBys[j]));
-                            if (taskList.size()==0) {
+                            int isTaskExit = taskDao.checkTaskExist(taskName, description, "", Integer.parseInt(inspectBys[j]));
+                            if (isTaskExit==0) {
                                 Task newTask = new Task(taskName,description,"",DateUtils.getNowDate(),userId,inspectTime,Integer.parseInt(inspectBys[j]), taskType);
 //                                newTask.setState(Task.RECEIVE);
                                 newTask.setApplyBy(Integer.parseInt(inspectBys[j]));
@@ -215,8 +246,8 @@ public class TaskService {
                             }
                         }
                     } else {
-                        List<Task> taskList = taskDao.checkTaskExist(taskName, description, "", 0);
-                        if (taskList.size()==0) {
+                        int isTaskExit = taskDao.checkTaskExist(taskName, description, "", 0);
+                        if (isTaskExit==0) {
                             Task newTask = new Task(taskName,description,"",DateUtils.getNowDate(),userId,inspectTime,0, taskType);
                             save(newTask);
                             result = "success";
@@ -230,9 +261,9 @@ public class TaskService {
 
     public void receiveTask(int userId, int taskId) {
         Task task = taskDao.get(taskId);
-        List<Task> taskList = taskDao.checkReceivedTaskExist(task.getTaskName(), task.getDescription(), task.getFacilityDomain(), userId);
+        int isTaskExit = taskDao.checkReceivedTaskExist(task.getTaskName(), task.getDescription(), task.getFacilityDomain(), userId);
         //若任务重复，则合并任务
-        if (taskList.size()==0) {
+        if (isTaskExit==0) {
             if (null==task.getInspectTime()) {
                 task.setInspectTime(DateUtils.getNowDate());
             }

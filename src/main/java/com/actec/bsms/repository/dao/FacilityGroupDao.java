@@ -43,12 +43,6 @@ public interface FacilityGroupDao extends CrudDao<FacilityGroup> {
     FacilityGroup findByName(@Param("name") String name);
 
     /**
-     * 查找最新添加数据
-     * @return
-     */
-    FacilityGroup findNewFacilityGroup();
-
-    /**
      * 查找所有设备组
      * @return
      */

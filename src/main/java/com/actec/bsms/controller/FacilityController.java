@@ -35,8 +35,9 @@ public class FacilityController extends BaseController {
     @Autowired
     FacilityService facilityService;
 
-
-
+    /**
+     * 根据用户Id获取用户归属设备组
+     */
     @GET
     @Path("/get")
     public String get(@QueryParam("userId")int userId) {
@@ -50,6 +51,9 @@ public class FacilityController extends BaseController {
         }
     }
 
+    /**
+     * 根据设备Id获取设备信息
+     */
     @GET
     @Path("/getFacility")
     public String getFacility(@QueryParam("facilityId")int facilityId) {
@@ -62,6 +66,9 @@ public class FacilityController extends BaseController {
         }
     }
 
+    /**
+     * 获取所有设备组
+     */
     @GET
     @Path("/getFacilityGroup")
     public String getFacilityGroup() {
@@ -73,6 +80,9 @@ public class FacilityController extends BaseController {
         }
     }
 
+    /**
+     * 根据用户Id获取用户所管理的所有设备信息
+     */
     @GET
     @Path("/getAllFacility")
     public String getAllFacility(@QueryParam("userId")int userId) {
@@ -89,11 +99,15 @@ public class FacilityController extends BaseController {
         }
     }
 
+    /**
+     * 添加、修改设备组
+     */
     @GET
     @Path("/setFacilityGroup")
     public String setFacilityGroup(@QueryParam("id")int facilityGroupId, @QueryParam("name")String name, @QueryParam("facilityDomains")String facilityDomains) {
         try {
             FacilityGroup facilityGroup = facilityGroupService.get(facilityGroupId, true);
+            //根据设备组名称去重
             if (null==facilityGroup) {
                 facilityGroup = facilityGroupService.findByName(name);
                 if (null==facilityGroup) {
@@ -101,15 +115,14 @@ public class FacilityController extends BaseController {
                 }
             }
             facilityGroup.setName(name);
+            //获取设备组关联设备列表
             String[] facilitys = facilityDomains.split(",");
             List<Facility> facilityList = Lists.newArrayList();
             for (int i=0;i<facilitys.length;i++) {
                 facilityList.add(facilityService.findByDomain(facilitys[i]));
             }
-            facilityGroupService.save(facilityGroup);
-            facilityGroup = facilityGroupService.findByName(name);
-            facilityGroup.setFacilityList(facilityList);
-            facilityGroupService.updateFacilityGroup(facilityGroup);
+            //保存
+            facilityGroupService.save(facilityGroup, facilityList);
             return JSON.toJSONString(successResult);
         } catch (Exception e) {
             logger.error(e.getMessage());
@@ -117,6 +130,9 @@ public class FacilityController extends BaseController {
         return JSON.toJSONString(failResult);
     }
 
+    /**
+     * 删除设备组
+     */
     @GET
     @Path("/delFacilityGroup")
     public String delFacilityGroup(@QueryParam("facilityGroupIds")String facilityGroupIds) {

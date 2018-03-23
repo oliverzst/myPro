@@ -141,7 +141,7 @@
 	<update id="createTable">
 		<![CDATA[
 		CREATE TABLE IF NOT EXISTS facility (
-		  id int AUTO_INCREMENT COMMENT '编号',
+		  id SMALLINT UNSIGNED AUTO_INCREMENT COMMENT '编号',
 		  ip varchar(64) DEFAULT NULL COMMENT '设备IP地址',
 		  name varchar(64) DEFAULT NULL COMMENT '设备名称',
 		  domain varchar(64) DEFAULT NULL COMMENT '设备域名',
@@ -150,12 +150,12 @@
   		  latitude decimal(10,5) COMMENT '纬度' DEFAULT NULL,
   		  manufacturer varchar(64) DEFAULT NULL COMMENT '设备厂家',
   		  address varchar(64) DEFAULT NULL COMMENT '设备地址',
-		  last_task_id int COMMENT '最近一次任务ID',
+		  last_task_id MEDIUMINT UNSIGNED COMMENT '最近一次任务ID',
 		  status varchar(64) DEFAULT NULL COMMENT '设备维护状态',
-		  type int COMMENT '设备类型',
+		  type TINYINT UNSIGNED COMMENT '设备类型',
 		  cch_freq varchar(64) DEFAULT NULL COMMENT '控制信道频点号',
-		  tch_count int COMMENT '逻辑信道个数',
-		  rcu_status int COMMENT '连接状态',
+		  tch_count TINYINT UNSIGNED COMMENT '逻辑信道个数',
+		  rcu_status TINYINT UNSIGNED COMMENT '连接状态',
 		  PRIMARY KEY (`id`)
 		) COMMENT='设备表';
 		]]>

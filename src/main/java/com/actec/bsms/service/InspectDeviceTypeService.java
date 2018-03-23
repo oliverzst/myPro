@@ -5,6 +5,9 @@ import com.actec.bsms.repository.dao.InspectDeviceTypeDao;
 import com.actec.bsms.utils.DateUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -50,6 +53,7 @@ public class InspectDeviceTypeService {
         }
     }
 
+    @Transactional(propagation = Propagation.REQUIRED,isolation = Isolation.DEFAULT,timeout=36000,rollbackFor=Exception.class)
     public void delete(InspectDeviceType inspectDeviceType) {
         if (null!=inspectDeviceType) {
             inspectDeviceTypeDao.delete(inspectDeviceType);

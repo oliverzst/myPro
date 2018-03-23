@@ -2,7 +2,7 @@ package com.actec.bsms.service;
 
 import com.actec.bsms.entity.Facility;
 import com.actec.bsms.entity.Watch;
-import com.actec.bsms.repository.dao.TaskDao;
+import com.actec.bsms.repository.dao.TableDao;
 import com.actec.bsms.repository.dao.WatchDao;
 import com.actec.bsms.utils.DateUtils;
 import com.actec.bsms.utils.StringUtils;
@@ -10,6 +10,9 @@ import com.actec.bsms.utils.TableCache;
 import com.google.common.collect.Lists;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Calendar;
 import java.util.List;
@@ -26,7 +29,9 @@ public class WatchService {
     @Autowired
     WatchDao watchDao;
     @Autowired
-    TaskDao taskDao;
+    TableDao tableDao;
+
+    private static String tableName = "watch";
 
     public Watch get(int id){
         return watchDao.get(id);
@@ -47,6 +52,18 @@ public class WatchService {
             watchDao.delete(watch);
         }
     }
+
+    @Transactional(propagation = Propagation.REQUIRED,isolation = Isolation.DEFAULT,timeout=36000,rollbackFor=Exception.class)
+    public void createMonthTable(int year, int month) {
+        //将当前task表另存为上月task月表
+        tableDao.createMonthTable(tableName, year, month);
+        //新建一张task表
+        watchDao.createTable();
+        //将未完成任务迁移到新task表
+        tableDao.updateMonthTable(tableName, year, month);
+        tableDao.deleteMonthTable(tableName, year, month);
+    }
+
 
     public Watch findByTaskId(int taskId) {
         return watchDao.findByTaskId(taskId);

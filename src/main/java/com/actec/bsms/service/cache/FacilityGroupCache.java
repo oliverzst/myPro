@@ -3,11 +3,13 @@ package com.actec.bsms.service.cache;
 import com.actec.bsms.entity.Facility;
 import com.actec.bsms.entity.FacilityGroup;
 import com.actec.bsms.repository.dao.FacilityGroupDao;
+import com.google.common.collect.Maps;
 import org.apache.commons.collections.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * 测试缓存
@@ -28,15 +30,21 @@ public class FacilityGroupCache extends IRedisService<FacilityGroup> {
         return this.REDIS_KEY;
     }
 
+    public void putAllFacilityGroups(List<FacilityGroup> facilityGroupList) {
+        if (!CollectionUtils.isEmpty(facilityGroupList)) {
+            Map<String, FacilityGroup> map = Maps.newHashMap();
+            for (FacilityGroup facilityGroup: facilityGroupList) {
+                map.put(String.valueOf(facilityGroup.getId()), facilityGroup);
+            }
+            this.putAll(map, -1);
+        }
+    }
+
     public void init() {
         //初始化，将所有未完成的Task存入缓存中
         this.empty();
         List<FacilityGroup> facilityGroupList = facilityGroupDao.findAll();
-        if (!CollectionUtils.isEmpty(facilityGroupList)) {
-            for (FacilityGroup facilityGroup: facilityGroupList) {
-                this.put(String.valueOf(facilityGroup.getId()), facilityGroup, -1);
-            }
-        }
+        putAllFacilityGroups(facilityGroupList);
     }
 
     public void deleteFacility(int facilityId) {

@@ -6,7 +6,7 @@
 	<update id="createTable">
 		<![CDATA[
 		CREATE TABLE IF NOT EXISTS inspect_device_type (
-		  id int AUTO_INCREMENT COMMENT '编号',
+		  id SMALLINT UNSIGNED AUTO_INCREMENT COMMENT '编号',
 		  name varchar(100) NOT NULL COMMENT '名称',
 		  create_date datetime NOT NULL COMMENT '创建时间',
 		  update_date datetime NOT NULL COMMENT '更新时间',

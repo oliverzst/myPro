@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 统计相关
+ * 统计相关接口
  *
  * @author zhangst
  * @create 2017-12-21 10:01 AM
@@ -35,6 +35,9 @@ public class StatisticsController extends BaseController{
     @Autowired
     StatisticsService statisticsService;
 
+    /**
+     * 根据用户进行统计巡检历史
+     */
     @GET
     @Path("/statisticsByUser")
     public String statisticsByUser(@QueryParam("userId")int userId, @QueryParam("year")String year, @QueryParam("month")String month) {
@@ -49,6 +52,9 @@ public class StatisticsController extends BaseController{
         return JSON.toJSONString(failResult);
     }
 
+    /**
+     * 根据用户和设备统计巡检历史
+     */
     @GET
     @Path("/statisticsByUserAndFacility")
     public String statisticsByUser(@QueryParam("userId")int userId, @QueryParam("facilityDomain")String facilityDomain, @QueryParam("year")String year, @QueryParam("month")String month) {
@@ -62,6 +68,9 @@ public class StatisticsController extends BaseController{
         return JSON.toJSONString(failResult);
     }
 
+    /**
+     * 获取有历史巡检的设备（部分设备已被删除，但删除之前有巡检历史）
+     */
     @GET
     @Path("/getFacilityMap")
     public String getFacilityMap() {
@@ -75,6 +84,9 @@ public class StatisticsController extends BaseController{
         return JSON.toJSONString(failResult);
     }
 
+    /**
+     * 获取开始记录巡检历史的时间
+     */
     @GET
     @Path("/getStartDate")
     public String getStartDate() {
@@ -86,6 +98,9 @@ public class StatisticsController extends BaseController{
         return JSON.toJSONString(failResult);
     }
 
+    /**
+     * 根据设备统计巡检历史
+     */
     @GET
     @Path("/statisticsByDevice")
     public String statisticsByDevice(@QueryParam("facilityDomain")String facilityDomain, @QueryParam("year")String year, @QueryParam("month")String month) {

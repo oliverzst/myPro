@@ -28,4 +28,11 @@ public interface TableDao extends CrudDao {
     void addIntColumn(@Param("columnName") String columnName, @Param("tableName") String tableName);
 
     void addDateColumn(@Param("columnName") String columnName, @Param("tableName") String tableName);
+
+    void createMonthTable(@Param("tableName") String tableName, @Param("year") int year, @Param("month") int month);
+
+    void updateMonthTable(@Param("tableName") String tableName, @Param("year") int year, @Param("month") int month);
+
+    void deleteMonthTable(@Param("tableName") String tableName, @Param("year") int year, @Param("month") int month);
+
 }

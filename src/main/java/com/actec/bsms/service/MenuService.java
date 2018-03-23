@@ -5,6 +5,9 @@ import com.actec.bsms.repository.dao.MenuDao;
 import com.actec.bsms.utils.DateUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -23,12 +26,14 @@ public class MenuService {
         return menuDao.get(id);
     }
 
-    public void save(Menu menu) {
+    @Transactional(propagation = Propagation.REQUIRED,isolation = Isolation.DEFAULT,timeout=36000,rollbackFor=Exception.class)
+    public void save(Menu menu, int inspectDeviceTypeId) {
         if (null!=menu) {
             if (menu.getId()==0) {
                 menu.setCreateDate(DateUtils.getNowDate());
                 menu.setUpdateDate(DateUtils.getNowDate());
                 menuDao.insert(menu);
+                insertInspectDeviceMenu(findLast().getId(), inspectDeviceTypeId);
             } else {
                 menu.setUpdateDate(DateUtils.getNowDate());
                 menuDao.update(menu);
@@ -40,6 +45,7 @@ public class MenuService {
         menuDao.insertInspectDeviceMenu(menuId, inspectDeviceTypeId);
     }
 
+    @Transactional(propagation = Propagation.REQUIRED,isolation = Isolation.DEFAULT,timeout=36000,rollbackFor=Exception.class)
     public void delete(int menuId, int inspectDeviceTypeId) {
         menuDao.delete(get(menuId));
         menuDao.deleteInspectDeviceMenu(menuId, inspectDeviceTypeId);

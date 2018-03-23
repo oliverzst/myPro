@@ -14,12 +14,6 @@ public interface WatchDao extends CrudDao<Watch> {
 
     void createTable();
 
-    void createMonthTable(@Param("year") int year, @Param("month") int month);
-
-    void updateInspectTable(@Param("year") int year, @Param("month") int month);
-
-    void deleteMonthTable(@Param("year") int year, @Param("month") int month);
-
     Watch findByTaskId(@Param("taskId") int taskId);
 
     List<Watch> findHistoryByUserId(@Param("userId") int userId);

@@ -10,7 +10,7 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 
 /**
- * 配置接口
+ * 系统配置相关接口
  *
  * @author zhangst
  * @create 2017-11-24 2:25 PM
@@ -20,6 +20,9 @@ import javax.ws.rs.core.MediaType;
 @Produces(MediaType.APPLICATION_JSON)
 public class ConfigController extends BaseController {
 
+    /**
+     * 设置网管IP地址
+     */
     @GET
     @Path("/setNmpIp")
     public void setNmpIp(@QueryParam("nmpIp")String nmpIp) {

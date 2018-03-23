@@ -74,6 +74,9 @@ public class MybatisConfig implements EnvironmentAware, TransactionManagementCon
         return dataSource;
     }
 
+    /**
+     * 注册Druid Servlet
+     */
     @Bean
     public ServletRegistrationBean druidServlet() {
         ServletRegistrationBean reg = new ServletRegistrationBean();
@@ -85,6 +88,9 @@ public class MybatisConfig implements EnvironmentAware, TransactionManagementCon
         return reg;
     }
 
+    /**
+     * 注册Druid过滤器
+     */
     @Bean
     public FilterRegistrationBean filterRegistrationBean() {
         FilterRegistrationBean filterRegistrationBean = new FilterRegistrationBean();
@@ -115,6 +121,9 @@ public class MybatisConfig implements EnvironmentAware, TransactionManagementCon
         return new SqlSessionTemplate(sqlSessionFactory);
     }
 
+    /**
+     * 注册事务Manager
+     */
     @Override
     public PlatformTransactionManager annotationDrivenTransactionManager() {
         try {

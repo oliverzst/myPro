@@ -14,8 +14,6 @@ public interface TroubleShootDao extends CrudDao<TroubleShoot> {
 
     void createTable();
 
-    void createMonthTable(@Param("year") int year, @Param("month") int month);
-
     List<TroubleShoot> findHistory(@Param("userId") int userId, @Param("moduleId") int moduleId, @Param("inspectDeviceType") int inspectDeviceType, @Param("facilityDomain") String facilityDomain);
 
     List<TroubleShoot> findHistoryByMonth(@Param("userId") int userId, @Param("moduleId") int moduleId, @Param("inspectDeviceType") int inspectDeviceType, @Param("facilityDomain") String facilityDomain, @Param("year") int year, @Param("month") int month);

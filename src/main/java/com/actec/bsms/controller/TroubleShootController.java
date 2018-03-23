@@ -27,6 +27,9 @@ public class TroubleShootController extends BaseController{
     @Autowired
     TroubleShootService troubleShootService;
 
+    /**
+     * 获取故障历史
+     */
     @GET
     @Path("/getHistory")
     public String getHistory(@QueryParam("userId")int userId, @QueryParam("moduleId")int moduleId, @QueryParam("inspectDeviceType")int inspectDeviceType,

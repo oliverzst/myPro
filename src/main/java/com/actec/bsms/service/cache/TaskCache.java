@@ -3,11 +3,13 @@ package com.actec.bsms.service.cache;
 import com.actec.bsms.entity.Task;
 import com.actec.bsms.repository.dao.TaskDao;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import org.apache.commons.collections.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * 测试缓存
@@ -41,15 +43,21 @@ public class TaskCache extends IRedisService<Task> {
         return taskListReturn;
     }
 
+    public void putAllTasks(List<Task> taskList) {
+        if (!CollectionUtils.isEmpty(taskList)) {
+            Map<String, Task> map = Maps.newHashMap();
+            for (Task task: taskList) {
+                map.put(String.valueOf(task.getId()), task);
+            }
+            this.putAll(map, -1);
+        }
+    }
+
     public void init() {
         //初始化，将所有未完成的Task存入缓存中
         this.empty();
         List<Task> taskList = taskDao.findNoFinishList();
-        if (!CollectionUtils.isEmpty(taskList)) {
-            for (Task task: taskList) {
-                this.put(String.valueOf(task.getId()), task, -1);
-            }
-        }
+        putAllTasks(taskList);
     }
 
 }

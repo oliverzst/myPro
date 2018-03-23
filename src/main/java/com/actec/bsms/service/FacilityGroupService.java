@@ -4,9 +4,13 @@ import com.actec.bsms.entity.Facility;
 import com.actec.bsms.entity.FacilityGroup;
 import com.actec.bsms.repository.dao.FacilityGroupDao;
 import com.actec.bsms.service.cache.FacilityGroupCache;
+import com.alibaba.fastjson.JSON;
 import com.google.common.collect.Lists;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Date;
 import java.util.List;
@@ -24,6 +28,11 @@ public class FacilityGroupService {
     @Autowired
     FacilityGroupCache facilityGroupCache;
 
+    public FacilityGroup get(int id){
+        FacilityGroup facilityGroup = facilityGroupDao.get(id);
+        return facilityGroup;
+    }
+
     public FacilityGroup get(int id, boolean isFromSql){
         FacilityGroup facilityGroup = facilityGroupCache.get(""+id);
         if (isFromSql && null==facilityGroup) {
@@ -32,30 +41,37 @@ public class FacilityGroupService {
         return facilityGroup;
     }
 
-    public void save(FacilityGroup facilityGroup) {
+    @Transactional(propagation = Propagation.REQUIRED,isolation = Isolation.DEFAULT,timeout=36000,rollbackFor=Exception.class)
+    public void save(FacilityGroup facilityGroup, List<Facility> facilityList) {
         if (null!=facilityGroup) {
             if (facilityGroup.getId()==0) {
                 facilityGroup.setCreateDate(new Date());
                 facilityGroup.setUpdateDate(new Date());
                 facilityGroupDao.insert(facilityGroup);
-                FacilityGroup newFacilityGroup = facilityGroupDao.findNewFacilityGroup();
-                facilityGroupCache.put(""+newFacilityGroup.getId(), newFacilityGroup, -1);
             } else {
                 facilityGroup.setUpdateDate(new Date());
                 facilityGroupDao.update(facilityGroup);
-                facilityGroupCache.put(""+facilityGroup.getId(), facilityGroup, -1);
             }
+            facilityGroup = findByName(facilityGroup.getName());
+            //比较设备列表是否改变，若改变则更新设备-设备组关联表数据
+            if (null==facilityGroup.getFacilityList() || !JSON.toJSONString(facilityList).equals(JSON.toJSONString(facilityGroup.getFacilityList()))) {
+                facilityGroup.setFacilityList(facilityList);
+                updateFacilityGroup(facilityGroup);
+            }
+            //更新缓存
+            facilityGroupCache.put(""+facilityGroup.getId(), facilityGroup, -1);
         }
     }
 
+    @Transactional(propagation = Propagation.REQUIRED,isolation = Isolation.DEFAULT,timeout=36000,rollbackFor=Exception.class)
     public void updateFacilityGroup(FacilityGroup facilityGroup) {
         facilityGroupDao.deleteFacilityGroup(facilityGroup);
         if (facilityGroup.getFacilityList() != null && facilityGroup.getFacilityList().size() > 0) {
             facilityGroupDao.insertFacilityGroup(facilityGroup);
         }
-        facilityGroupCache.put(""+facilityGroup.getId(), facilityGroup, -1);
     }
 
+    @Transactional(propagation = Propagation.REQUIRED,isolation = Isolation.DEFAULT,timeout=36000,rollbackFor=Exception.class)
     public void delete(int facilityGroupId) {
         FacilityGroup facilityGroup = facilityGroupDao.get(facilityGroupId);
         if (null!=facilityGroup) {

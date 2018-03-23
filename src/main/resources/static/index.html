@@ -154,17 +154,24 @@
                                     </div>
                                 </div>
                                 <div class="task-detail"
-                                    v-if="taskFilter=='myRelease'&&task.state==0">
+                                    v-if="taskFilter=='myRelease'&&task.state==0&&!task.inspectUser">
                                     <div class="task-release-tip"></div>
                                     <div class="task-release-time">
                                         {{task.facilityName}}&nbsp;&nbsp;暂时无人接受任务
                                     </div>
                                 </div>
                                 <div class="task-detail"
+                                    v-if="taskFilter=='myRelease'&&task.state==0&&task.inspectUser">
+                                    <div class="task-release-tip"></div>
+                                    <div class="task-release-time">
+                                        {{task.facilityName}}&nbsp;&nbsp;{{task.inspectUser.name}}&nbsp;尚未接受任务
+                                    </div>
+                                </div>
+                                <div class="task-detail"
                                     v-if="taskFilter=='myRelease'&&task.state==1&&!task.inspectRecords">
                                     <div class="task-release-tip"></div>
                                     <div class="task-release-time">
-                                        {{task.facilityName}}&nbsp;&nbsp;{{task.inspectUser&&task.inspectUser.name}}已接受任务
+                                        {{task.facilityName}}&nbsp;&nbsp;{{task.inspectUser&&task.inspectUser.name}}&nbsp;已接受任务
                                     </div>
                                 </div>
                                 <div class="task-detail task-detail-out"
@@ -178,7 +185,7 @@
                                     v-if="taskFilter=='myRelease'&&task.state==2&&!task.inspectRecords">
                                     <div class="task-release-tip"></div>
                                     <div class="task-release-time">
-                                        {{task.facilityName}}&nbsp;&nbsp;{{task.inspectUser&&task.inspectUser.name}}正在执行任务
+                                        {{task.facilityName}}&nbsp;&nbsp;{{task.inspectUser&&task.inspectUser.name}}&nbsp;正在执行任务
                                     </div>
                                 </div>
                                 <div class="task-detail task-detail-out"
@@ -192,7 +199,7 @@
                                     v-if="taskFilter=='myRelease'&&task.inspectRecords">
                                     <div class="task-release-tip"></div>
                                     <div class="task-release-time">
-                                        {{task.facilityName}}&nbsp;&nbsp;{{task.inspectUser&&task.inspectUser.name}}已完成任务
+                                        {{task.facilityName}}&nbsp;&nbsp;{{task.inspectUser&&task.inspectUser.name}}&nbsp;已完成任务
                                     </div>
                                 </div>
                                 <div class="task-detail"
@@ -409,7 +416,7 @@
                                                 {{alarmItem.description}}
                                             </div>
                                             <div class="table-td table-td-scroll facility-alarm-item-type">
-                                                {{alarmItem.code}}
+                                                {{alarmItem.codeName}}
                                             </div>
                                             <div class="table-td table-td-scroll facility-alarm-item-proposal">
                                                 {{alarmItem.proposal}}
