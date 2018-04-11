@@ -30,7 +30,7 @@ public class PropertiesLoader {
 
     private static ResourceLoader resourceLoader = new DefaultResourceLoader();
 
-    private final Properties properties;
+    private static Properties properties;
 
     public PropertiesLoader(String... resourcesPaths) {
         properties = loadProperties(resourcesPaths);
@@ -44,7 +44,7 @@ public class PropertiesLoader {
     /**
      * 取出Property，但以System的Property优先,取不到返回空字符串.
      */
-    private String getValue(String key) {
+    private static String getValue(String key) {
         String systemProperty = System.getProperty(key);
         if (systemProperty != null) {
             return systemProperty;
@@ -58,10 +58,10 @@ public class PropertiesLoader {
     /**
      * 取出String类型的Property，但以System的Property优先,如果都为Null则抛出异常.
      */
-    public String getProperty(String key) {
+    public static String getProperty(String key) {
         String value = getValue(key);
         if (value == null) {
-            throw new NoSuchElementException();
+            logger.error("no much properties");
         }
         return value;
     }

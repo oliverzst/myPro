@@ -2,7 +2,7 @@ package com.actec.bsms.config;
 
 import com.actec.bsms.common.filter.CorsFilter;
 import com.actec.bsms.controller.*;
-import com.actec.bsms.mongo.DictController;
+import com.actec.bsms.mongoDemo.DictController;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.server.spring.scope.RequestContextFilter;
 
@@ -26,6 +26,7 @@ public class JerseyConfig extends ResourceConfig {
         register(TroubleShootController.class);
         register(StatisticsController.class);
         register(DictController.class);
+        register(SerialController.class);
     }
 
 }
