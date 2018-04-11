@@ -14,9 +14,9 @@ import java.io.Serializable;
  */
 public class Role extends DataEntity<Role> implements Serializable{
 
-	public final static  String ADMIN = "超级管理员";
-	public final static  String MASTER = "管理员";
-	public final static  String USER = "工程人员";
+	public final static String ADMIN = "超级管理员";
+	public final static String MASTER = "管理员";
+	public final static String USER = "工程人员";
 
 	private static final long serialVersionUID = 1L;
 	private String name; 	// 角色名称
@@ -24,7 +24,7 @@ public class Role extends DataEntity<Role> implements Serializable{
 	private String dataScope;// 数据范围
 	
 	private String oldName; 	// 原角色名称
-	private String useable; 		//是否是可用
+	private String useAble; 		//是否是可用
 	
 //	private User user;		// 根据用户ID查询角色列表
 //
@@ -43,7 +43,7 @@ public class Role extends DataEntity<Role> implements Serializable{
 	public Role() {
 		super();
 		this.dataScope = DATA_SCOPE_SELF;
-		this.useable= Global.YES;
+		this.useAble= Global.YES;
 	}
 	
 	public Role(int id){
@@ -55,12 +55,12 @@ public class Role extends DataEntity<Role> implements Serializable{
 //		this.user = user;
 	}
 
-	public String getUseable() {
-		return useable;
+	public String getUseAble() {
+		return useAble;
 	}
 
-	public void setUseable(String useable) {
-		this.useable = useable;
+	public void setUseAble(String useAble) {
+		this.useAble = useAble;
 	}
 
 	public String getName() {

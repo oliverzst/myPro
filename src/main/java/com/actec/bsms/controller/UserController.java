@@ -37,6 +37,10 @@ public class UserController extends BaseController{
 
     private static String result = "";
 
+    private static final String userNotExit = "帐号不存在";
+    private static final String error = "系统错误";
+    private static final String success = "配置成功";
+
     /**
      * 用户登录
      */
@@ -51,7 +55,7 @@ public class UserController extends BaseController{
             //查找登陆帐号或者手机号是否存在
             User user = userService.findByLoginName(loginName);
             if (null==user) {
-                result = "账号不存在";
+                result = userNotExit;
                 return JSON.toJSONString(result);
             }
             //密码验证
@@ -73,7 +77,7 @@ public class UserController extends BaseController{
             }
         } catch (Exception e) {
             logger.error(e.getMessage());
-            result = "系统错误";
+            result = error;
             return JSON.toJSONString(result);
         }
     }
@@ -87,7 +91,7 @@ public class UserController extends BaseController{
         try {
             User user = userService.get(userId, true);
             if (user==null) {
-                result = "账号不存在";
+                result = userNotExit;
                 return JSON.toJSONString(result);
             }
             if (CodeUtils.validatePassword(oldPassword, user.getPassword())) {
@@ -100,7 +104,7 @@ public class UserController extends BaseController{
             }
         } catch (Exception e) {
             logger.error(e.getMessage());
-            result = "系统错误";
+            result = error;
             return JSON.toJSONString(result);
         }
     }
@@ -144,7 +148,7 @@ public class UserController extends BaseController{
             return JSON.toJSONString(result);
         } catch (Exception e) {
             logger.error(e.getMessage());
-            result = "系统错误，注册失败";
+            result = error;
             return JSON.toJSONString(result);
         }
     }
@@ -175,7 +179,7 @@ public class UserController extends BaseController{
             return JSON.toJSONString(result);
         } catch (Exception e) {
             logger.error(e.getMessage());
-            result = "系统错误，修改失败";
+            result = error;
             return JSON.toJSONString(result);
         }
     }
@@ -194,7 +198,7 @@ public class UserController extends BaseController{
             return JSON.toJSONString(result);
         }catch (Exception e) {
             logger.error(e.getMessage());
-            result = "系统错误";
+            result = error;
             return JSON.toJSONString(result);
         }
     }
@@ -209,11 +213,11 @@ public class UserController extends BaseController{
             User user = userService.get(userId, true);
             user.setFacilityGroupId(facilityGroupId);
             userService.save(user);
-            result = "配置成功";
+            result = success;
             return JSON.toJSONString(result);
         }catch (Exception e) {
             logger.error(e.getMessage());
-            result = "系统错误，配置失败";
+            result = error;
             return JSON.toJSONString(result);
         }
     }
@@ -228,11 +232,11 @@ public class UserController extends BaseController{
             User user = userService.get(userId, true);
             user.setRoleId(roleId);
             userService.save(user);
-            result = "配置成功";
+            result = success;
             return JSON.toJSONString(result);
         }catch (Exception e) {
             logger.error(e.getMessage());
-            result = "配置失败";
+            result = error;
             return JSON.toJSONString(result);
         }
     }
@@ -286,7 +290,7 @@ public class UserController extends BaseController{
             }
             //批量修改
             userService.batchUpdate(updateUserList);
-            result = "配置成功";
+            result = success;
             return JSON.toJSONString(result);
         }catch (Exception e) {
             logger.error(e.getMessage());
@@ -305,7 +309,7 @@ public class UserController extends BaseController{
             User user = userService.get(userId, true);
             user.setInspectDeviceType(inspectDeviceType);
             userService.save(user);
-            result = "配置成功";
+            result = success;
             return JSON.toJSONString(result);
         }catch (Exception e) {
             logger.error(e.getMessage());
@@ -350,7 +354,7 @@ public class UserController extends BaseController{
             return JSON.toJSONString(userList);
         } catch (Exception e) {
             logger.error(e.getMessage());
-            result = "系统错误";
+            result = error;
             return JSON.toJSONString(result);
         }
     }
@@ -386,7 +390,7 @@ public class UserController extends BaseController{
             return JSON.toJSONString(userListResult);
         }catch (Exception e) {
             logger.error(e.getMessage());
-            result = "系统错误";
+            result = error;
             return JSON.toJSONString(result);
         }
     }
@@ -402,7 +406,7 @@ public class UserController extends BaseController{
             return JSON.toJSONString(user);
         }catch (Exception e) {
             logger.error(e.getMessage());
-            result = "系统错误";
+            result = error;
             return JSON.toJSONString(result);
         }
     }

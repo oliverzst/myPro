@@ -29,8 +29,6 @@ public class TroubleShootService {
     @Autowired
     TableDao tableDao;
 
-    private static String tableName = "trouble_shoot";
-
     public TroubleShoot get(int id){
         return troubleShootDao.get(id);
     }
@@ -53,6 +51,7 @@ public class TroubleShootService {
 
     @Transactional(propagation = Propagation.REQUIRED,isolation = Isolation.DEFAULT,timeout=36000,rollbackFor=Exception.class)
     public void createMonthTable(int year, int month) {
+        final String tableName = "trouble_shoot";
         //将当前task表另存为上月task月表
         tableDao.createMonthTable(tableName, year, month);
         //新建一张task表

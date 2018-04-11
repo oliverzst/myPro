@@ -31,8 +31,6 @@ public class WatchService {
     @Autowired
     TableDao tableDao;
 
-    private static String tableName = "watch";
-
     public Watch get(int id){
         return watchDao.get(id);
     }
@@ -55,6 +53,7 @@ public class WatchService {
 
     @Transactional(propagation = Propagation.REQUIRED,isolation = Isolation.DEFAULT,timeout=36000,rollbackFor=Exception.class)
     public void createMonthTable(int year, int month) {
+        final String tableName = "watch";
         //将当前task表另存为上月task月表
         tableDao.createMonthTable(tableName, year, month);
         //新建一张task表

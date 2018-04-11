@@ -22,7 +22,7 @@ public class RealtimeAlarmSocket extends AbstractVerticle {
     private static Logger logger = LoggerFactory.getLogger(RealtimeAlarmSocket.class);
     private static final int BSMS_REALTIME_ALARM_PORT = 8500;
     private static final int BUFFER_SIZE = 1024 * 1024 * 10;
-    public static final List<AlarmRealTime> REALTIME_ALARM_LIST = Lists.newArrayList();
+    public static List<AlarmRealTime> REALTIME_ALARM_LIST = Lists.newArrayList();
 
     @Override
     public void start(Future<Void> startFuture) throws Exception {

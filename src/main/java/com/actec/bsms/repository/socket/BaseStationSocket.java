@@ -21,7 +21,7 @@ public class BaseStationSocket extends AbstractVerticle{
     private static Logger logger = LoggerFactory.getLogger(BaseStationSocket.class);
 
     private static final int BSMS_SWITCHER_PORT = 8400;
-    public static final List<RcuInfo> BASE_STASTION_LIST = Lists.newArrayList();
+    public static List<RcuInfo> BASE_STASTION_LIST = Lists.newArrayList();
     private static final int BUFFER_SIZE = 1024 * 1024 * 10;
 
     @Override

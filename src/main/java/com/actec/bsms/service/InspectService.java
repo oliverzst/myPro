@@ -44,8 +44,6 @@ public class InspectService {
     @Autowired
     TableDao tableDao;
 
-    private static String tableName = "inspect";
-
     public Inspect get(int id){
         return inspectDao.get(id);
     }
@@ -68,6 +66,7 @@ public class InspectService {
 
     @Transactional(propagation = Propagation.REQUIRED,isolation = Isolation.DEFAULT,timeout=36000,rollbackFor=Exception.class)
     public void createMonthTable(int year, int month) {
+        final String tableName = "inspect";
         //将当前task表另存为上月task月表
         tableDao.createMonthTable(tableName, year, month);
         //新建一张task表

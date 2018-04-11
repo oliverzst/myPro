@@ -35,7 +35,6 @@ public class FacilityService {
     FacilityGroupCache facilityGroupCache;
     @Autowired
     InspectDao inspectDao;
-
     @Autowired
     UserDao userDao;
 

@@ -19,17 +19,17 @@ public abstract class BaseController {
 	/**
 	 * 日志对象
 	 */
-	protected Logger logger = LoggerFactory.getLogger(getClass());
+	protected final Logger logger = LoggerFactory.getLogger(getClass());
 
 	/**
 	 * 成功对象
 	 */
-	protected static String successResult = "success";
+	protected static final String successResult = "success";
 
 	/**
 	 * 失败对象
 	 */
-	protected static String failResult = "failure";
+	protected static final String failResult = "failure";
 
 	@Context
 	protected HttpServletResponse response;

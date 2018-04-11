@@ -18,9 +18,9 @@ public class User extends DataEntity<User> implements Serializable{
 
 	private static final long serialVersionUID = 1L;
 
-	public static int ADMIN = 1;
-	public static int MANAGER = 2;
-	public static int NORMAL = 3;
+	public static final int ADMIN = 1;
+	public static final int MANAGER = 2;
+	public static final int NORMAL = 3;
 
 	private String loginName;// 登录名
 	private String password;// 密码
