@@ -10,8 +10,6 @@ import com.actec.bsms.utils.ApplicationContextHelper;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.TypeReference;
 import com.google.common.collect.Lists;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import javax.websocket.*;
@@ -28,39 +26,33 @@ import java.util.Map;
 @ServerEndpoint("/websocket/TaskHandler")
 @Component
 public class TaskWebsocket extends BaseWebsocket {
-    private static Logger logger = LoggerFactory.getLogger(TaskWebsocket.class);
 
-    private UserService userService = ApplicationContextHelper.getBean(UserService.class);
-
-    private FacilityGroupService facilityGroupService = ApplicationContextHelper.getBean(FacilityGroupService.class);
-
-    private TaskService taskService = ApplicationContextHelper.getBean(TaskService.class);
+    private static UserService userService = ApplicationContextHelper.getBean(UserService.class);
+    private static FacilityGroupService facilityGroupService = ApplicationContextHelper.getBean(FacilityGroupService.class);
+    private static TaskService taskService = ApplicationContextHelper.getBean(TaskService.class);
 
     @Override
     protected String getMessage(String message, Session session) {
         try {
             Map<String, String> map = JSON.parseObject(message, new TypeReference<Map<String,String>>(){});
-            int userId = Integer.parseInt(map.get("userId"));
+            final int userId = Integer.parseInt(map.get("userId"));
             User user = userService.get(userId, false);
-            int facilityGroupId = user.getFacilityGroupId();
-            int roleId = user.getRoleId();
+            final int facilityGroupId = user.getFacilityGroupId();
+            final int roleId = user.getRoleId();
             List<Facility> facilityList = facilityGroupService.get(facilityGroupId, false).getFacilityList();
             List<Task> taskList = Lists.newArrayList();
             //根据用户权限级别推送不同的数据
             if (roleId<=User.MANAGER) {
-                for (int i=0;i<facilityList.size();i++) {
-                    List<Task> inspectTaskList = taskService.findAllTaskByFacilityDomainAndUserId(userId, facilityList.get(i).getDomain(), false);
-                    for (int j=0;j<inspectTaskList.size();j++) {
-                        Task task = inspectTaskList.get(j);
-                        task.setFacilityName(facilityList.get(i).getName());
-                        taskList.add(task);
-                    }
+                for (int i=0,len=facilityList.size();i<len;i++) {
+                    taskList = taskService.findAllTaskByFacilityDomainAndUserId(taskList, userId, facilityList.get(i), false);
                 }
             } else {
+                //根据用户的巡检设备类型 筛选数据
                 String inspectDeviceTypes = user.getInspectDeviceType();
                 String[] inspectDeviceTypeString = inspectDeviceTypes.split(",");
+                List<Task> inspectTaskList = Lists.newArrayList();
                 for (int i=0;i<facilityList.size();i++) {
-                    List<Task> inspectTaskList = taskService.findAllTaskByFacilityDomainAndUserId(userId, facilityList.get(i).getDomain(), false);
+                    inspectTaskList = taskService.findAllTaskByFacilityDomainAndUserId(inspectTaskList, userId, facilityList.get(i), false);
                     for (int j=0;j<inspectTaskList.size();j++) {
                         Task task = inspectTaskList.get(j);
                         if (task.getType()!=Task.DUTY_TASK) {
@@ -77,7 +69,8 @@ public class TaskWebsocket extends BaseWebsocket {
                     }
                 }
             }
-            taskList.addAll(taskService.findDutyTaskByFacilityDomainAndUserId(userId, "", false));
+            //查询设备为null的值守任务
+            taskList.addAll(taskService.findDutyTaskByFacilityDomainAndUserId(userId, null, false));
             return JSON.toJSONString(taskList);
         } catch (Exception e) {
             logger.error(e.getMessage());

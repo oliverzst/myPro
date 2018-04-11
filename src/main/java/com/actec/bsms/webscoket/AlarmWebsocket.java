@@ -1,16 +1,14 @@
 package com.actec.bsms.webscoket;
 
-import com.actec.bsms.vo.Alarm;
 import com.actec.bsms.repository.socket.RealtimeAlarmSocket;
 import com.actec.bsms.service.FacilityGroupService;
 import com.actec.bsms.service.UserService;
-import com.actec.bsms.utils.ApplicationContextHelper;
 import com.actec.bsms.utils.AlarmUtils;
+import com.actec.bsms.utils.ApplicationContextHelper;
+import com.actec.bsms.vo.Alarm;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.TypeReference;
 import com.google.common.collect.Lists;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import javax.websocket.*;
@@ -29,13 +27,10 @@ import java.util.Map;
 @Component
 public class AlarmWebsocket extends BaseWebsocket {
 
-    private static Logger logger = LoggerFactory.getLogger(AlarmWebsocket.class);
+    private static UserService userService = ApplicationContextHelper.getBean(UserService.class);
+    private static FacilityGroupService facilityGroupService = ApplicationContextHelper.getBean(FacilityGroupService.class);
 
-    private UserService userService = ApplicationContextHelper.getBean(UserService.class);
-
-    private FacilityGroupService facilityGroupService = ApplicationContextHelper.getBean(FacilityGroupService.class);
-
-    private static String failResult = "failure";
+    private static final String failResult = "failure";
 
     @Override
     protected String getMessage(String message, Session session) {
@@ -43,21 +38,21 @@ public class AlarmWebsocket extends BaseWebsocket {
             Map<String, String> map = JSON.parseObject(message, new TypeReference<Map<String,String>>(){});
             int userId = Integer.parseInt(map.get("userId"));
             int facilityGroupId = userService.get(userId, false).getFacilityGroupId();
-            List<String> facDomainList = facilityGroupService.getFacDomains(facilityGroupId, false);
+            Map<String, String> facDomainMap = facilityGroupService.getFacDomains(facilityGroupId, false);
             List<Alarm> alarmList = AlarmUtils.alarmRealTimesToAlarms(RealtimeAlarmSocket.REALTIME_ALARM_LIST);
             List<Alarm> alarmReportList = Lists.newArrayList();
-            Alarm alarm = new Alarm();
-            alarm.setAlarmId("1");
-            alarm.setRealName("基站69");
-            alarm.setDomainName("r69.pdt.cn");
-            alarm.setCodeName("断电");
+            Alarm alarm5 = new Alarm();
+            alarm5.setAlarmId("1");
+            alarm5.setRealName("基站69");
+            alarm5.setDomainName("r69.pdt.cn");
+            alarm5.setCodeName("断电");
             String time = "2017-11-27 10:10:10";
             SimpleDateFormat sdf=new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-            alarm.setAlarmTimestamp(sdf.parse(time));
-            alarm.setLevelName("严重");
-            alarm.setDescription("告警描述");
-            alarm.setProposal("处理建议");
-            alarmList.add(alarm);
+            alarm5.setAlarmTimestamp(sdf.parse(time));
+            alarm5.setLevelName("严重");
+            alarm5.setDescription("告警描述");
+            alarm5.setProposal("处理建议");
+            alarmList.add(alarm5);
             Alarm alarm1 = new Alarm();
             alarm1.setAlarmId("2");
             alarm1.setRealName("基站16");
@@ -106,10 +101,12 @@ public class AlarmWebsocket extends BaseWebsocket {
             alarm4.setDescription("告警描述");
             alarm4.setProposal("处理建议");
             alarmList.add(alarm4);
-            for (int i=0;i<alarmList.size();i++) {
-                //根据设备域名检查告警数据，若不满足，则删除，不上报
-                if (facDomainList.contains(alarmList.get(i).getDomainName())) {
-                    alarmReportList.add(alarmList.get(i));
+            for (int i=0,len=alarmList.size();i<len;i++) {
+                //根据设备域名检查告警数据,若满足,则为其添加实名;若不满足，则删除，不上报
+                Alarm alarm = alarmList.get(i);
+                if (facDomainMap.containsKey(alarm.getDomainName())) {
+                    alarm.setRealName(facDomainMap.get(alarm.getDomainName()));
+                    alarmReportList.add(alarm);
                 }
             }
             return JSON.toJSONString(alarmReportList);

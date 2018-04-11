@@ -1,5 +1,6 @@
 package com.actec.bsms.service.cache;
 
+import com.actec.bsms.entity.Facility;
 import com.actec.bsms.entity.Task;
 import com.actec.bsms.repository.dao.TaskDao;
 import com.google.common.collect.Lists;
@@ -30,13 +31,15 @@ public class TaskCache extends IRedisService<Task> {
         return this.REDIS_KEY;
     }
 
-    public List<Task> findByFacilityDomainAndUserId(int userId, String facilityDomain, int type) {
-        List<Task> taskList = this.getAll();
+    public List<Task> findByFacilityDomainAndUserId(int userId, Facility facility, int type) {
+        List<Task> taskList = getAll();
         List<Task> taskListReturn = Lists.newArrayList();
-        for (int t=0;t<taskList.size();t++) {
-            Task task = taskList.get(t);
-            if (task.getFacilityDomain().equals(facilityDomain) && task.getType()==type && (task.getInspectBy()==0 ||
+        Task task;
+        for (int t=0,len=taskList.size();t<len;t++) {
+            task = taskList.get(t);
+            if (task.getFacilityDomain().equals(facility==null?"":facility.getDomain()) && task.getType()==type && (task.getInspectBy()==0 ||
                     task.getInspectBy()==userId || task.getReleaseBy()==userId)) {
+                task.setFacilityName(facility.getName());
                 taskListReturn.add(task);
             }
         }

@@ -1,9 +1,7 @@
 package com.actec.bsms.utils;
 
 import com.actec.bsms.entity.AlarmRealTime;
-import com.actec.bsms.entity.Facility;
 import com.actec.bsms.vo.Alarm;
-import com.actec.bsms.service.FacilityService;
 import com.google.common.collect.Lists;
 
 import java.util.Date;
@@ -18,15 +16,11 @@ import java.util.List;
 
 public class AlarmUtils {
 
-    private static FacilityService facilityService = ApplicationContextHelper.getBean(FacilityService.class);
-
     public static Alarm alarmRealTimeToAlarm(AlarmRealTime alarmRealTime) {
         Alarm alarm = new Alarm();
         alarm.setAlarmId(alarmRealTime.getAlarmResultId()!=null?alarmRealTime.getAlarmResultId():"");
         alarm.setDomainName(alarmRealTime.getDomainName()!=null?alarmRealTime.getDomainName():"");
         alarm.setFullDomainName(alarmRealTime.getFullDomainName()!=null?alarmRealTime.getFullDomainName():"");
-        Facility facility = facilityService.findByDomain(alarm.getDomainName());
-        alarm.setRealName(facility!=null?facility.getName():"");
         alarm.setFullRealName(alarmRealTime.getFullRealName()!=null?alarmRealTime.getFullRealName():"");
         alarm.setCode(alarmRealTime.getCode());
         alarm.setCodeName(alarmRealTime.getCodeName()!=null?alarmRealTime.getCodeName():"");

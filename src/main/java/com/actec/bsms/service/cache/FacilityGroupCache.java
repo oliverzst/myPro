@@ -82,4 +82,19 @@ public class FacilityGroupCache extends IRedisService<FacilityGroup> {
         }
     }
 
+    public String findRealNameByDomain(String domain) {
+        List<FacilityGroup> facilityGroupList = this.getAll();
+        for (int i=0;i<facilityGroupList.size();i++) {
+            FacilityGroup facilityGroup = facilityGroupList.get(i);
+            List<Facility> facilityList = facilityGroup.getFacilityList();
+            for (int j=0;j<facilityList.size();j++) {
+                Facility facility = facilityList.get(j);
+                if (facility.getDomain().equals(domain)) {
+                    return facility.getName();
+                }
+            }
+        }
+        return "";
+    }
+
 }

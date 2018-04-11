@@ -12,25 +12,22 @@ import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.regex.Pattern;
 
 /**
  * Created by wdl on 14-10-8.
  * Altered by yc on 16-04-20
  */
 public abstract class BaseWebsocket {
-    private static Logger logger = LoggerFactory.getLogger(BaseWebsocket.class);
+    public static Logger logger = LoggerFactory.getLogger(BaseWebsocket.class);
 
-    private Long sleepDuration = 1L;
-
-    protected Long getSleepDuration() {
-        return sleepDuration;
+    protected static Long getSleepDuration() {
+        return 1L;
     }
 
     private String requestMsg = "";
 
     /*map键值对，key设置成String，有时候切换页面，上一页面webscoket线程关不掉*/
-    private static final Map<Session, WebSocketRunnable> map = new HashMap<>();
+    private static Map<Session, WebSocketRunnable> map = new HashMap<>();
 
     protected abstract String getMessage(String messageFromClient, Session session);
 
@@ -44,6 +41,11 @@ public abstract class BaseWebsocket {
         logger.debug("Session id " + session.getId() + " was closed.");
         if (map.containsKey(session) && map.get(session) != null) {
             map.get(session).flag = false;
+        }
+        try {
+            session.close();
+        } catch (IOException e) {
+            logger.error(e.toString(), e);
         }
         map.remove(session);
     }
@@ -64,8 +66,6 @@ public abstract class BaseWebsocket {
         private boolean flag = true;
         private String responseMsg = "";
         private String prevRespMsg = "";
-
-        private final Pattern pattern = Pattern.compile("user:(\\w+),sxu:(\\d+.\\d+.\\d+.\\d+)");
 
         WebSocketRunnable(Session session) {
             this.session = session;

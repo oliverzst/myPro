@@ -6,6 +6,7 @@ import com.actec.bsms.repository.dao.FacilityGroupDao;
 import com.actec.bsms.service.cache.FacilityGroupCache;
 import com.alibaba.fastjson.JSON;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
@@ -14,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 设备组service
@@ -89,16 +91,16 @@ public class FacilityGroupService {
         return facilityGroupDao.findAll();
     }
 
-    public List<String> getFacDomains(int id, boolean isFromSql) {
-        List<String> facDomains = Lists.newArrayList();
+    public Map<String, String> getFacDomains(int id, boolean isFromSql) {
+        Map<String, String> facDomainMap = Maps.newHashMap();
         List<Facility> facilityList = Lists.newArrayList();
         if (null!=get(id, isFromSql)) {
             facilityList = get(id, isFromSql).getFacilityList();
         }
         for (int i=0;i<facilityList.size();i++) {
-            facDomains.add(facilityList.get(i).getDomain());
+            facDomainMap.put(facilityList.get(i).getDomain(), facilityList.get(i).getName());
         }
-        return facDomains;
+        return facDomainMap;
     }
 
 }

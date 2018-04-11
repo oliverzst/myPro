@@ -13,7 +13,7 @@ import java.util.List;
 
 public class FacilityGroup extends DataEntity<FacilityGroup> {
 
-    public static int ALL_FACILITY = 1;
+    public static final int ALL_FACILITY = 1;
 
     private String name;	//名称
 

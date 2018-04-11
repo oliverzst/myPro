@@ -1,5 +1,6 @@
 package com.actec.bsms.service;
 
+import com.actec.bsms.entity.Facility;
 import com.actec.bsms.entity.Task;
 import com.actec.bsms.repository.dao.TableDao;
 import com.actec.bsms.repository.dao.TaskDao;
@@ -37,8 +38,6 @@ public class TaskService {
     @Autowired
     TaskCache taskCache;
 
-    private static String tableName = "task";
-
     public Task get(int id){
         return taskDao.get(id);
     }
@@ -49,14 +48,14 @@ public class TaskService {
             if (task.getId()==0) {
                 taskDao.insert(task);
                 Task lastInsertTask = taskDao.findLastInsertTask();
-                taskCache.put(""+lastInsertTask.getId(), lastInsertTask, -1);
+                taskCache.put(Integer.toString(lastInsertTask.getId()), lastInsertTask, -1);
             } else {
                 taskDao.update(task);
                 if (task.getState()==Task.FINISH) {
                     //已完成任务，从缓存中移除
-                    taskCache.remove(""+task.getId());
+                    taskCache.remove(Integer.toString(task.getId()));
                 } else {
-                    taskCache.put(""+task.getId(), get(task.getId()), -1);
+                    taskCache.put(Integer.toString(task.getId()), get(task.getId()), -1);
                 }
             }
         }
@@ -66,12 +65,13 @@ public class TaskService {
     public void delete(Task task) {
         if (null!=task) {
             taskDao.delete(task);
-            taskCache.remove(""+task.getId());
+            taskCache.remove(Integer.toString(task.getId()));
         }
     }
 
     @Transactional(propagation = Propagation.REQUIRED,isolation = Isolation.DEFAULT,timeout=36000,rollbackFor=Exception.class)
     public void createMonthTable(int year, int month) {
+        final String tableName = "task";
         //将当前task表另存为上月task月表
         tableDao.createMonthTable(tableName, year, month);
         //新建一张task表
@@ -85,35 +85,35 @@ public class TaskService {
         return taskDao.findByFacilityDomain(facilityDomain, Task.INSPECT_TASK);
     }
 
-    public List<Task> findAllTaskByFacilityDomainAndUserId(int userId, String facilityDomain, boolean isFromSql) {
-        List<Task> inspectTaskList = findInspectTaskByFacilityDomainAndUserId(userId, facilityDomain, isFromSql);
-        inspectTaskList.addAll(findRepairTaskByFacilityDomainAndUserId(userId, facilityDomain, isFromSql));
-        inspectTaskList.addAll(findDutyTaskByFacilityDomainAndUserId(userId, facilityDomain, isFromSql));
-        return inspectTaskList;
-    }
-
-    public List<Task> findInspectTaskByFacilityDomainAndUserId(int userId, String facilityDomain, boolean isFromSql) {
-        List<Task> taskList = taskCache.findByFacilityDomainAndUserId(userId, facilityDomain, Task.INSPECT_TASK);
-        if (isFromSql && taskList.size()==0) {
-            taskList = taskDao.findByFacilityDomainAndUserId(userId, facilityDomain, Task.INSPECT_TASK);
-        }
+    public List<Task> findAllTaskByFacilityDomainAndUserId(List<Task> taskList, int userId, Facility facility, boolean isFromSql) {
+        taskList.addAll(findInspectTaskByFacilityDomainAndUserId(userId, facility, isFromSql));
+        taskList.addAll(findRepairTaskByFacilityDomainAndUserId(userId, facility, isFromSql));
+        taskList.addAll(findDutyTaskByFacilityDomainAndUserId(userId, facility, isFromSql));
         return taskList;
     }
 
-    public List<Task> findRepairTaskByFacilityDomainAndUserId(int userId, String facilityDomain, boolean isFromSql) {
-        List<Task> taskList = taskCache.findByFacilityDomainAndUserId(userId, facilityDomain, Task.REPAIR_TASK);
-        if (isFromSql && taskList.size()==0) {
-            taskList = taskDao.findByFacilityDomainAndUserId(userId, facilityDomain, Task.REPAIR_TASK);
+    public List<Task> findInspectTaskByFacilityDomainAndUserId(int userId, Facility facility, boolean isFromSql) {
+        if (isFromSql && taskCache.findByFacilityDomainAndUserId(userId, facility, Task.INSPECT_TASK).size()!=0) {
+            return taskCache.findByFacilityDomainAndUserId(userId, facility, Task.INSPECT_TASK);
+        } else {
+            return taskDao.findByFacilityDomainAndUserId(userId, facility.getDomain(), Task.INSPECT_TASK);
         }
-        return taskList;
     }
 
-    public List<Task> findDutyTaskByFacilityDomainAndUserId(int userId, String facilityDomain, boolean isFromSql) {
-        List<Task> taskList = taskCache.findByFacilityDomainAndUserId(userId, facilityDomain, Task.DUTY_TASK);
-        if (isFromSql && taskList.size()==0) {
-            taskList = taskDao.findByFacilityDomainAndUserId(userId, facilityDomain, Task.DUTY_TASK);
+    public List<Task> findRepairTaskByFacilityDomainAndUserId(int userId, Facility facility, boolean isFromSql) {
+        if (isFromSql && taskCache.findByFacilityDomainAndUserId(userId, facility, Task.REPAIR_TASK).size()!=0) {
+            return taskCache.findByFacilityDomainAndUserId(userId, facility, Task.REPAIR_TASK);
+        } else {
+            return taskDao.findByFacilityDomainAndUserId(userId, facility.getDomain(), Task.REPAIR_TASK);
         }
-        return taskList;
+    }
+
+    public List<Task> findDutyTaskByFacilityDomainAndUserId(int userId, Facility facility, boolean isFromSql) {
+        if (isFromSql && taskCache.findByFacilityDomainAndUserId(userId, facility, Task.DUTY_TASK).size()!=0) {
+            return taskCache.findByFacilityDomainAndUserId(userId, facility, Task.DUTY_TASK);
+        } else {
+            return taskDao.findByFacilityDomainAndUserId(userId, facility==null?"":facility.getDomain(), Task.DUTY_TASK);
+        }
     }
 
     public List<Task> findByFacilityAndUserAndInspectDeviceType(String facilityDomain, int userId, int inspectDeviceType) {
