@@ -3049,10 +3049,10 @@ var vm = new Vue({
 		goToFacilityHistoryItem: function(facilityHistoryItem,thisType){
 			var id = facilityHistoryItem.id;
 			if(facilityHistoryItem.inspectType !== 10){
-				var url = vm.taskUrlPrefix + "/getTask";
+				var url = vm.taskUrlPrefix + "/getInspect";
 				vm.currentFacilityHistoryItem = [];
 				vm.getData(url,"GET",{
-					taskId: id
+					inspectId: id
 				},function(data){
 					if(data){
 						vm.currentFacilityHistoryItem = data;
