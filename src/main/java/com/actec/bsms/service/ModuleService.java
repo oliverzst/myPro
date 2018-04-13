@@ -41,6 +41,23 @@ public class ModuleService {
         }
     }
 
+    public void setMoudle(int moduleId, String name, String description, String inputType, int inspectDeviceTypeId){
+        Module module;
+        if (moduleId!=0) {
+            module = get(moduleId);
+        } else {
+            module = new Module();
+        }
+        module.setName(name);
+        if (null!=description) {
+            module.setDescription(description);
+        }
+        if (null!=inputType) {
+            module.setInputType(inputType);
+        }
+        save(module, inspectDeviceTypeId);
+    }
+
     public void insertInspectDeviceModule(int moduleId, int inspectDeviceTypeId) {
         moduleDao.insertInspectDeviceModule(moduleId, inspectDeviceTypeId);
     }

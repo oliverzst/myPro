@@ -17,7 +17,7 @@ import javax.ws.rs.core.MediaType;
 import java.util.List;
 
 /**
- * 巡检设备类型操作接口
+ * 用户巡检设备类型操作接口
  *
  * @author zhangst
  * @create 2017-11-28 5:34 PM
@@ -74,16 +74,9 @@ public class InspectDeviceTypeController extends BaseController {
      */
     @GET
     @Path("/setInspectDeviceType")
-    public String setInspectDeviceType(@QueryParam("id")int id, @QueryParam("name")String name, @QueryParam("menuIds")String menuIds, @QueryParam("moduleIds")String moduleIds) {
+    public String setInspectDeviceType(@QueryParam("id")int id, @QueryParam("name")String name) {
         try {
-            InspectDeviceType inspectDeviceType = new InspectDeviceType();
-            if (id!=0) {
-                inspectDeviceType = inspectDeviceTypeService.get(id);
-            }
-            if (name!=null) {
-                inspectDeviceType.setName(name);
-            }
-            inspectDeviceTypeService.save(inspectDeviceType);
+            inspectDeviceTypeService.setInspectDeviceType(id, name);
             return JSON.toJSONString(successResult);
         } catch (Exception e) {
             logger.error(e.getMessage());
@@ -98,11 +91,8 @@ public class InspectDeviceTypeController extends BaseController {
     @Path("/deleteInspectDeviceType")
     public String deleteInspectDeviceType(@QueryParam("id")int id) {
         try {
-            InspectDeviceType inspectDeviceType = inspectDeviceTypeService.get(id);
-            if (null!=inspectDeviceType) {
-                inspectDeviceTypeService.delete(inspectDeviceType);
-            }
-            //删除用户绑定的该巡检设备类型
+            inspectDeviceTypeService.delete(id);
+            //同时删除用户绑定的该巡检设备类型
             userService.deleteInspectDeviceType(id);
             return JSON.toJSONString(successResult);
         } catch (Exception e) {

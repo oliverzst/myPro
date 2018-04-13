@@ -70,7 +70,7 @@ public interface UserDao extends CrudDao<User> {
     User findByDevice(@Param("deviceId") String deviceId);
 
     /**
-     * 查询下级用户
+     * 根据roleId查询下级用户
      * @param roleId
      * @return
      */

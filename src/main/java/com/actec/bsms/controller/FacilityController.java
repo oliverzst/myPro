@@ -6,7 +6,6 @@ import com.actec.bsms.service.FacilityGroupService;
 import com.actec.bsms.service.FacilityService;
 import com.actec.bsms.service.UserService;
 import com.alibaba.fastjson.JSON;
-import com.google.common.collect.Lists;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 
@@ -15,10 +14,9 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
-import java.util.List;
 
 /**
- * 任务操作接口
+ * 设备及设备组操作接口
  *
  * @author zhangst
  * @create 2017-11-14 3:25 PM
@@ -87,7 +85,9 @@ public class FacilityController extends BaseController {
     @Path("/getAllFacility")
     public String getAllFacility(@QueryParam("userId")int userId) {
         try {
+            //获取用户归属设备组ID
             int facilityGroupId = userService.get(userId, true).getFacilityGroupId();
+            //获取用户归属设备组
             FacilityGroup facilityGroup = facilityGroupService.get(facilityGroupId, true);
             if (null!=facilityGroup) {
                 return JSON.toJSONString(facilityGroup.getFacilityList());
@@ -106,23 +106,7 @@ public class FacilityController extends BaseController {
     @Path("/setFacilityGroup")
     public String setFacilityGroup(@QueryParam("id")int facilityGroupId, @QueryParam("name")String name, @QueryParam("facilityDomains")String facilityDomains) {
         try {
-            FacilityGroup facilityGroup = facilityGroupService.get(facilityGroupId, true);
-            //根据设备组名称去重
-            if (null==facilityGroup) {
-                facilityGroup = facilityGroupService.findByName(name);
-                if (null==facilityGroup) {
-                    facilityGroup = new FacilityGroup();
-                }
-            }
-            facilityGroup.setName(name);
-            //获取设备组关联设备列表
-            String[] facilitys = facilityDomains.split(",");
-            List<Facility> facilityList = Lists.newArrayList();
-            for (int i=0;i<facilitys.length;i++) {
-                facilityList.add(facilityService.findByDomain(facilitys[i]));
-            }
-            //保存
-            facilityGroupService.save(facilityGroup, facilityList);
+            facilityGroupService.setFacilityGroup(facilityGroupId, name, facilityDomains);
             return JSON.toJSONString(successResult);
         } catch (Exception e) {
             logger.error(e.getMessage());

@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 统计相关接口
+ * 巡检统计接口
  *
  * @author zhangst
  * @create 2017-12-21 10:01 AM

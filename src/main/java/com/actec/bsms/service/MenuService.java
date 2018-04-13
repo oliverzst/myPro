@@ -41,6 +41,23 @@ public class MenuService {
         }
     }
 
+    public void setMenu(int menuId, String name, String description, String inputType, int inspectDeviceTypeId){
+        Menu menu;
+        if (menuId!=0) {
+            menu = get(menuId);
+        } else {
+            menu = new Menu();
+        }
+        menu.setName(name);
+        if (null!=description) {
+            menu.setDescription(description);
+        }
+        if (null!=inputType) {
+            menu.setInputType(inputType);
+        }
+        save(menu, inspectDeviceTypeId);
+    }
+
     public void insertInspectDeviceMenu(int menuId, int inspectDeviceTypeId) {
         menuDao.insertInspectDeviceMenu(menuId, inspectDeviceTypeId);
     }

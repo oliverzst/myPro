@@ -15,7 +15,7 @@ import javax.ws.rs.core.MediaType;
 import java.util.List;
 
 /**
- * 模块接口
+ * 用户巡检模块接口
  *
  * @author zhangst
  * @create 2017-11-28 5:34 PM
@@ -60,18 +60,7 @@ public class ModuleController extends BaseController {
     public String setModule(@QueryParam("moduleId")int moduleId, @QueryParam("name")String name, @QueryParam("description")String description,
                             @QueryParam("inputType")String inputType, @QueryParam("inspectDeviceTypeId")int inspectDeviceTypeId) {
         try {
-            Module module = new Module();
-            if (moduleId!=0) {
-                module = moduleService.get(moduleId);
-            }
-            module.setName(name);
-            if (null!=description) {
-                module.setDescription(description);
-            }
-            if (null!=inputType) {
-                module.setInputType(inputType);
-            }
-            moduleService.save(module, inspectDeviceTypeId);
+            moduleService.setMoudle(moduleId, name, description, inputType, inspectDeviceTypeId);
             return JSON.toJSONString(successResult);
         } catch (Exception e) {
             logger.error(e.getMessage());

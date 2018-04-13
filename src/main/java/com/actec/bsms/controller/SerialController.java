@@ -12,7 +12,7 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 
 /**
- * 串口通信控制器
+ * 串口通信控制器接口
  *
  * @author zhangst
  * @create 2018-04-10 6:23 PM

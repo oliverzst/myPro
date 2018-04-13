@@ -35,7 +35,7 @@ public class TroubleShoot {
 
     private int moduleId; //故障模块ID
 
-    private InspectDeviceModule module; //故障模块
+    private Module module; //故障模块
 
     private int number; //序号
 
@@ -107,11 +107,11 @@ public class TroubleShoot {
         this.moduleId = moduleId;
     }
 
-    public InspectDeviceModule getModule() {
+    public Module getModule() {
         return module;
     }
 
-    public void setModule(InspectDeviceModule module) {
+    public void setModule(Module module) {
         this.module = module;
     }
 

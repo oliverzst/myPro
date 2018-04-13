@@ -31,6 +31,7 @@ public class BsmsApplication {
 	 */
 	public static void main(String[] args) {
 		SpringApplication.run(BsmsApplication.class, args);
+		//运行启动类
 		ServiceManager.contextInitialized();
 		logger.info("SpringBoot Start Success");
 	}

@@ -2,6 +2,7 @@ package com.actec.bsms.service;
 
 import com.actec.bsms.entity.Facility;
 import com.actec.bsms.entity.FacilityGroup;
+import com.actec.bsms.repository.dao.FacilityDao;
 import com.actec.bsms.repository.dao.FacilityGroupDao;
 import com.actec.bsms.service.cache.FacilityGroupCache;
 import com.alibaba.fastjson.JSON;
@@ -29,6 +30,8 @@ public class FacilityGroupService {
     FacilityGroupDao facilityGroupDao;
     @Autowired
     FacilityGroupCache facilityGroupCache;
+    @Autowired
+    FacilityDao facilityDao;
 
     public FacilityGroup get(int id){
         FacilityGroup facilityGroup = facilityGroupDao.get(id);
@@ -63,6 +66,27 @@ public class FacilityGroupService {
             //更新缓存
             facilityGroupCache.put(""+facilityGroup.getId(), facilityGroup, -1);
         }
+    }
+
+    @Transactional(propagation = Propagation.REQUIRED,isolation = Isolation.DEFAULT,timeout=36000,rollbackFor=Exception.class)
+    public void setFacilityGroup(int facilityGroupId, String name, String facilityDomains) {
+        FacilityGroup facilityGroup = get(facilityGroupId, true);
+        //根据设备组名称去重
+        if (null==facilityGroup) {
+            facilityGroup = findByName(name);
+            if (null==facilityGroup) {
+                facilityGroup = new FacilityGroup();
+            }
+        }
+        facilityGroup.setName(name);
+        //获取设备组关联设备列表
+        String[] facilityS = facilityDomains.split(",");
+        List<Facility> facilityList = Lists.newArrayList();
+        for (int i=0;i<facilityS.length;i++) {
+            facilityList.add(facilityDao.findByDomain(facilityS[i]));
+        }
+        //保存
+        save(facilityGroup, facilityList);
     }
 
     @Transactional(propagation = Propagation.REQUIRED,isolation = Isolation.DEFAULT,timeout=36000,rollbackFor=Exception.class)

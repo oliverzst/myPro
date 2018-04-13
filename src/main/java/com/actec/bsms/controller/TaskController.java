@@ -44,15 +44,14 @@ public class TaskController extends BaseController{
     TaskCache taskCache;
 
     /**
-     * 根据任务ID获取任务
+     * 根据ID获取巡检内容
      */
     @GET
-    @Path("/getTask")
-    public String getTask(@QueryParam("taskId")int id) {
+    @Path("/getInspect")
+    public String getTask(@QueryParam("inspectId")int inspectId) {
         try {
-            Inspect inspect = inspectService.findByIdByTableName(id);
-            String result = JSON.toJSONString(inspect);
-            return result;
+            Inspect inspect = inspectService.findByIdByTableName(inspectId);
+            return JSON.toJSONString(inspect);
         } catch (Exception e) {
             logger.error(e.getMessage());
         }
@@ -130,7 +129,7 @@ public class TaskController extends BaseController{
     }
 
     /**
-     * 用户到站签到（还未实现功能）
+     * 用户到站签到（功能还未实现功能）
      */
     @GET
     @Path("/signBaseStation")
@@ -253,8 +252,7 @@ public class TaskController extends BaseController{
                                  @QueryParam("inspectDeviceTypeId")int inspectDeviceTypeId) {
         try {
             List<Task> taskList = taskService.findByFacilityAndUserAndInspectDeviceType(facilityDomain, userId, inspectDeviceTypeId);
-            String result = JSON.toJSONString(taskList, SerializerFeature.WriteMapNullValue);
-            return result;
+            return JSON.toJSONString(taskList, SerializerFeature.WriteMapNullValue);
         } catch (Exception e) {
             logger.error(e.getMessage());
             return JSON.toJSONString(failResult);
@@ -309,8 +307,7 @@ public class TaskController extends BaseController{
                                          @QueryParam("month")String month) {
         try {
             List<Inspect> historyInspectList = inspectService.getInspectHistoryByFacility(year, month, facilityDomain);
-            String result = JSON.toJSONString(historyInspectList, SerializerFeature.WriteMapNullValue);
-            return result;
+            return JSON.toJSONString(historyInspectList, SerializerFeature.WriteMapNullValue);
         } catch (Exception e) {
             logger.error(e.getMessage());
         }
@@ -325,8 +322,7 @@ public class TaskController extends BaseController{
     public String getUserTaskHistory(@QueryParam("userId")int userId, @QueryParam("year")String year, @QueryParam("month")String month) {
         try {
             List<Inspect> historyInspectList = inspectService.getInspectHistoryByUser(year, month, userId);
-            String result = JSON.toJSONString(historyInspectList, SerializerFeature.WriteMapNullValue);
-            return result;
+            return JSON.toJSONString(historyInspectList, SerializerFeature.WriteMapNullValue);
         } catch (Exception e) {
             logger.error(e.getMessage());
         }
@@ -341,8 +337,7 @@ public class TaskController extends BaseController{
     public String getUserDutyHistory(@QueryParam("userId")int userId, @QueryParam("year")String year, @QueryParam("month")String month) {
         try {
             List<Watch> historyWatchList = watchService.findWatchList(year, month, userId);
-            String result = JSON.toJSONString(historyWatchList, SerializerFeature.WriteMapNullValue);
-            return result;
+            return JSON.toJSONString(historyWatchList, SerializerFeature.WriteMapNullValue);
         } catch (Exception e) {
             logger.error(e.getMessage());
         }

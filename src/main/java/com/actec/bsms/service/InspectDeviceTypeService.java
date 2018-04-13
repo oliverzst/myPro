@@ -54,9 +54,25 @@ public class InspectDeviceTypeService {
     }
 
     @Transactional(propagation = Propagation.REQUIRED,isolation = Isolation.DEFAULT,timeout=36000,rollbackFor=Exception.class)
-    public void delete(InspectDeviceType inspectDeviceType) {
+    public void setInspectDeviceType(int id, String name) {
+        InspectDeviceType inspectDeviceType;
+        if (id!=0) {
+            inspectDeviceType = get(id);
+        } else {
+            inspectDeviceType = new InspectDeviceType();
+        }
+        if (name!=null) {
+            inspectDeviceType.setName(name);
+        }
+        save(inspectDeviceType);
+    }
+
+    @Transactional(propagation = Propagation.REQUIRED,isolation = Isolation.DEFAULT,timeout=36000,rollbackFor=Exception.class)
+    public void delete(int inspectDeviceTypeId) {
+        InspectDeviceType inspectDeviceType = get(inspectDeviceTypeId);
         if (null!=inspectDeviceType) {
             inspectDeviceTypeDao.delete(inspectDeviceType);
+            //同时删除关联的目录和模块
             inspectDeviceTypeDao.deleteInspectDeviceMenu(inspectDeviceType);
             inspectDeviceTypeDao.deleteInspectDeviceModule(inspectDeviceType);
         }

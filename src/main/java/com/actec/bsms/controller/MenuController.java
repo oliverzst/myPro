@@ -15,7 +15,7 @@ import javax.ws.rs.core.MediaType;
 import java.util.List;
 
 /**
- * 目录接口
+ * 用户巡检目录接口
  *
  * @author zhangst
  * @create 2017-11-28 5:34 PM
@@ -60,18 +60,7 @@ public class MenuController extends BaseController {
     public String setMenu(@QueryParam("menuId")int menuId, @QueryParam("name")String name, @QueryParam("description")String description,
                           @QueryParam("inputType")String inputType, @QueryParam("inspectDeviceTypeId")int inspectDeviceTypeId) {
         try {
-            Menu menu = new Menu();
-            if (menuId!=0) {
-                menu = menuService.get(menuId);
-            }
-            menu.setName(name);
-            if (null!=description) {
-                menu.setDescription(description);
-            }
-            if (null!=inputType) {
-                menu.setInputType(inputType);
-            }
-            menuService.save(menu, inspectDeviceTypeId);
+            menuService.setMenu(menuId, name, description, inputType, inspectDeviceTypeId);
             return JSON.toJSONString(successResult);
         } catch (Exception e) {
             logger.error(e.getMessage());
