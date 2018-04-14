@@ -32,6 +32,10 @@ public class InitCacheTask implements Runnable{
     @Override
     public void run() {
         try {
+            //清空redis
+            facilityGroupCache.empty();
+            userCache.empty();
+            taskCache.empty();
             while (true) {
                 if (facilityGroupCache.count()==0 && userCache.count()==0 && taskCache.count()==0) {
                     taskCache.init();

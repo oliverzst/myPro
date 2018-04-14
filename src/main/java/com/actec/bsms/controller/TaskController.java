@@ -2,7 +2,6 @@ package com.actec.bsms.controller;
 
 import com.actec.bsms.entity.*;
 import com.actec.bsms.service.*;
-import com.actec.bsms.service.cache.TaskCache;
 import com.actec.bsms.utils.DateUtils;
 import com.actec.bsms.utils.StringUtils;
 import com.alibaba.fastjson.JSON;
@@ -40,8 +39,6 @@ public class TaskController extends BaseController{
     UserService userService;
     @Autowired
     FacilityService facilityService;
-    @Autowired
-    TaskCache taskCache;
 
     /**
      * 根据ID获取巡检内容
